@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel de Administração – Atualizar Saldo</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+    h1 { color: #22d3ee; }
+    .form-box {
+      background: #1f2937;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(14,165,233,0.5);
+      width: 300px;
+      margin-bottom: 30px;
+    }
+    label { display: block; margin: 10px 0 5px; }
+    input {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 15px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #0ea5e9;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover { background: #22d3ee; }
+    .msg { margin-top: 15px; font-weight: bold; }
+    #usuarios { width: 90%; max-width: 600px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    table th, table td { border: 1px solid #334155; padding: 8px; text-align: center; }
+    table th { background: #1e293b; }
+    .login-container { text-align: center; margin-top: 100px; }
+  </style>
+</head>
+<body>
+  <div class="login-container" id="loginContainer">
+    <h1>Administração</h1>
+    <p>Faça login para acessar o painel</p>
+    <button onclick="netlifyIdentity.open()">Login</button>
+  </div>
+
+  <div id="painel" style="display:none; width:100%; align-items:center; flex-direction:column;">
+    <h1>Painel de Administração</h1>
+    <div class="form-box">
+      <label>Email do usuário</label>
+      <input type="email" id="email" placeholder="usuario@teste.com">
+
+      <label>Valor a adicionar (USDT)</label>
+      <input type="number" id="valor" placeholder="Ex: 50">
+
+      <button onclick="atualizarSaldo()">Atualizar Saldo</button>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div id="usuarios">
+      <h2>Lista de Usuários</h2>
+      <table>
+        <thead>
+          <tr><th>Email</th><th>Saldo (USDT)</th></tr>
+        </thead>
+        <tbody id="tabelaUsuarios">
+          <tr><td colspan="2">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_EMAIL = "boylouco512@gmail.com";
+
+    async function atualizarSaldo() {
+      const email = document.getElementById("email").value.trim();
+      const valor = parseFloat(document.getElementById("valor").value);
+
+      const msg = document.getElementById("msg");
+      msg.innerText = "";
+
+      if (!email || isNaN(valor)) {
+        msg.innerText = "Preencha corretamente os campos!";
+        return;
+      }
+
+      try {
+        const res = await fetch(`/.netlify/functions/getSaldo?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        if (data.saldo === undefined) {
+          msg.innerText = "Usuário não encontrado!";
+          return;
+        }
+
+        const novoSaldo = parseFloat(data.saldo) + valor;
+
+        const res2 = await fetch('/.netlify/functions/updateSaldo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, saldo: novoSaldo })
+        });
+
+        const resultado = await res2.json();
+        if (resultado.success) {
+          msg.innerText = `Saldo atualizado para ${novoSaldo.toFixed(2)} USDT`;
+          carregarUsuarios();
+        } else {
+          msg.innerText = "Erro ao atualizar saldo!";
+        }
+      } catch (error) {
+        console.error(error);
+        msg.innerText = "Erro de comunicação com o servidor!";
+      }
+    }
+
+    // Função para carregar todos os usuários
+    async function carregarUsuarios() {
+      const tabela = document.getElementById("tabelaUsuarios");
+      tabela.innerHTML = "<tr><td colspan='2'>Carregando...</td></tr>";
+
+      try {
+        const res = await fetch('/.netlify/functions/getAllUsers'); // precisa existir
+        const lista = await res.json();
+
+        if (!Array.isArray(lista) || lista.length === 0) {
+          tabela.innerHTML = "<tr><td colspan='2'>Nenhum usuário encontrado</td></tr>";
+          return;
+        }
+
+        tabela.innerHTML = lista
+          .map(u => `<tr><td>${u.email}</td><td>${parseFloat(u.saldo).toFixed(2)}</td></tr>`)
+          .join("");
+      } catch (error) {
+        console.error(error);
+        tabela.innerHTML = "<tr><td colspan='2'>Erro ao carregar usuários</td></tr>";
+      }
+    }
+
+    // Proteção de login
+    netlifyIdentity.on("login", user => {
+      if (user.email === ADMIN_EMAIL) {
+        document.getElementById("loginContainer").style.display = "none";
+        document.getElementById("painel").style.display = "flex";
+        carregarUsuarios();
+      } else {
+        alert("Acesso negado para este e-mail!");
+        netlifyIdentity.logout();
+      }
+    });
+
+    netlifyIdentity.on("logout", () => {
+      document.getElementById("loginContainer").style.display = "block";
+      document.getElementById("painel").style.display = "none";
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      netlifyIdentity.init();
+    });
+  </script>
+</body>
+</html>
