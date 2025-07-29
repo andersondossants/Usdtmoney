@@ -1,11 +1,7 @@
 {
-  "name": "usdtmoney-functions",
+  "name": "usdtmoney",
   "version": "1.0.0",
-  "description": "Funções Netlify para USDT Money",
-  "main": "index.js",
-  "scripts": {
-    "start": "netlify dev"
-  },
+  "scripts": {},
   "dependencies": {
     "pg": "^8.11.3"
   }
