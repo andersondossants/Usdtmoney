@@ -4,4 +4,3 @@
 
 [dev]
   functions = "netlify/functions"
- 
