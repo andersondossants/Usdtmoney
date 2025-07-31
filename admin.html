@@ -196,6 +196,7 @@
       netlifyIdentity.init();
     });
   </script>
+  <script>
   async function carregarDepositos() {
   const res = await fetch('/.netlify/functions/getDepositos');
   const lista = await res.json();
@@ -245,5 +246,6 @@ async function aprovarSaque(id) {
   carregarSaques();
   carregarUsuarios();
 }
+  </script>
 </body>
 </html>
