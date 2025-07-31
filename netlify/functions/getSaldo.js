@@ -10,16 +10,18 @@ exports.handler = async function (event) {
   }
 
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_URL, // <- importante
     ssl: { rejectUnauthorized: false }
   });
 
   try {
     await client.connect();
+
     const result = await client.query(
-      "SELECT saldo FROM usuarios WHERE email = $1",
+      "SELECT id, email, saldo, referencia FROM usuarios WHERE email = $1",
       [email]
     );
+
     await client.end();
 
     if (result.rows.length === 0) {
@@ -31,10 +33,10 @@ exports.handler = async function (event) {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ saldo: parseFloat(result.rows[0].saldo) })
+      body: JSON.stringify(result.rows[0])
     };
   } catch (error) {
-    console.error("Erro ao buscar saldo:", error);
+    console.error("Erro getSaldo:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: "Erro interno no servidor" })
