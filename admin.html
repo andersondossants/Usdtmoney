@@ -173,5 +173,35 @@
       netlifyIdentity.init();
     });
   </script>
+  <script>
+async function carregarUsuarios() {
+  const adminEmail = "boylouco512@gmail.com"; // email autorizado
+  const url = `/.netlify/functions/getAllUsers?email=${adminEmail}`;
+
+  try {
+    const resposta = await fetch(url);
+    const dados = await resposta.json();
+
+    const tabela = document.getElementById("tabela-usuarios");
+    tabela.innerHTML = "";
+
+    dados.forEach(usuario => {
+      const linha = document.createElement("tr");
+      linha.innerHTML = `
+        <td>${usuario.id}</td>
+        <td>${usuario.email}</td>
+        <td>${usuario.saldo}</td>
+        <td>${usuario.referencia}</td>
+      `;
+      tabela.appendChild(linha);
+    });
+
+  } catch (erro) {
+    console.error("Erro ao carregar usuários:", erro);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", carregarUsuarios);
+  </script>
 </body>
 </html>
