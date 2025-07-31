@@ -100,6 +100,7 @@
       }
 
       try {
+        // Busca o saldo atual
         const res = await fetch(`/.netlify/functions/getSaldo?email=${encodeURIComponent(email)}`);
         const data = await res.json();
 
@@ -110,6 +111,7 @@
 
         const novoSaldo = parseFloat(data.saldo) + valor;
 
+        // Atualiza o saldo
         const res2 = await fetch('/.netlify/functions/updateSaldo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -135,7 +137,7 @@
       tabela.innerHTML = "<tr><td colspan='2'>Carregando...</td></tr>";
 
       try {
-        const res = await fetch('/.netlify/functions/getAllUsers'); // precisa existir
+        const res = await fetch(`/.netlify/functions/getAllUsers?email=${ADMIN_EMAIL}`);
         const lista = await res.json();
 
         if (!Array.isArray(lista) || lista.length === 0) {
@@ -172,36 +174,6 @@
     document.addEventListener("DOMContentLoaded", () => {
       netlifyIdentity.init();
     });
-  </script>
-  <script>
-async function carregarUsuarios() {
-  const adminEmail = "boylouco512@gmail.com"; // email autorizado
-  const url = `/.netlify/functions/getAllUsers?email=${adminEmail}`;
-
-  try {
-    const resposta = await fetch(url);
-    const dados = await resposta.json();
-
-    const tabela = document.getElementById("tabela-usuarios");
-    tabela.innerHTML = "";
-
-    dados.forEach(usuario => {
-      const linha = document.createElement("tr");
-      linha.innerHTML = `
-        <td>${usuario.id}</td>
-        <td>${usuario.email}</td>
-        <td>${usuario.saldo}</td>
-        <td>${usuario.referencia}</td>
-      `;
-      tabela.appendChild(linha);
-    });
-
-  } catch (erro) {
-    console.error("Erro ao carregar usuários:", erro);
-  }
-}
-
-document.addEventListener("DOMContentLoaded", carregarUsuarios);
   </script>
 </body>
 </html>
