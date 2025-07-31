@@ -83,6 +83,27 @@
       </table>
     </div>
   </div>
+  <div id="pedidos">
+  <h2>Pedidos de Depósito</h2>
+  <table>
+    <thead>
+      <tr><th>Email</th><th>Valor</th><th>Status</th><th>Ação</th></tr>
+    </thead>
+    <tbody id="tabela-depositos">
+      <tr><td colspan="4">Carregando...</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Pedidos de Saque</h2>
+  <table>
+    <thead>
+      <tr><th>Email</th><th>Valor</th><th>Status</th><th>Ação</th></tr>
+    </thead>
+    <tbody id="tabela-saques">
+      <tr><td colspan="4">Carregando...</td></tr>
+    </tbody>
+  </table>
+  </div>
 
   <script>
     const ADMIN_EMAIL = "boylouco512@gmail.com";
@@ -175,5 +196,54 @@
       netlifyIdentity.init();
     });
   </script>
+  async function carregarDepositos() {
+  const res = await fetch('/.netlify/functions/getDepositos');
+  const lista = await res.json();
+  const tabela = document.getElementById('tabela-depositos');
+
+  tabela.innerHTML = lista.map(d => `
+    <tr>
+      <td>${d.email}</td>
+      <td>${d.valor}</td>
+      <td>${d.status}</td>
+      <td>${d.status === 'pendente' ? `<button onclick="aprovarDeposito(${d.id})">Aprovar</button>` : ''}</td>
+    </tr>
+  `).join('');
+}
+
+async function carregarSaques() {
+  const res = await fetch('/.netlify/functions/getSaques');
+  const lista = await res.json();
+  const tabela = document.getElementById('tabela-saques');
+
+  tabela.innerHTML = lista.map(s => `
+    <tr>
+      <td>${s.email}</td>
+      <td>${s.valor}</td>
+      <td>${s.status}</td>
+      <td>${s.status === 'pendente' ? `<button onclick="aprovarSaque(${s.id})">Aprovar</button>` : ''}</td>
+    </tr>
+  `).join('');
+}
+
+async function aprovarDeposito(id) {
+  await fetch('/.netlify/functions/aprovarDeposito', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ id })
+  });
+  carregarDepositos();
+  carregarUsuarios();
+}
+
+async function aprovarSaque(id) {
+  await fetch('/.netlify/functions/aprovarSaque', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ id })
+  });
+  carregarSaques();
+  carregarUsuarios();
+}
 </body>
 </html>
