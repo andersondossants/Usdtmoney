@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-exports.handler = async function(event) {
+exports.handler = async function (event) {
   const email = event.queryStringParameters?.email;
   if (!email) {
     return {
@@ -10,7 +10,7 @@ exports.handler = async function(event) {
   }
 
   const client = new Client({
-    connectionString: process.env.NETLIFY_DATABASE_URL,
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
