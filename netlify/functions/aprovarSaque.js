@@ -36,4 +36,4 @@ exports.handler = async (event) => {
     console.error("Erro aprovarSaque:", error);
     return { statusCode: 500, body: JSON.stringify({ error: "Erro interno" }) };
   }
-};￼Enter
+};
