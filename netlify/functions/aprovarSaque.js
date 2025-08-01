@@ -24,7 +24,7 @@ exports.handler = async (event) => {
     await client.query('UPDATE saques SET status=$1 WHERE id=$2', ['aprovado', id]);
 
     // 3. Diminui o saldo do usuário (opcional)
-    await client.query('UPDATE users SET saldo = saldo - $1 WHERE email=$2', [valor, email]);
+    await client.query('UPDATE usuarios SET saldo = saldo - $1 WHERE email=$2', [valor, email]);
 
     await client.end();
 
