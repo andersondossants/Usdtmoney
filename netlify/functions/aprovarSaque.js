@@ -1,39 +1,39 @@
 const { Client } = require('pg');
 
 exports.handler = async (event) => {
-  const { id } = JSON.parse(event.body || "{}");
-  if (!id) {
-    return { statusCode: 400, body: JSON.stringify({ error: "ID é obrigatório" }) };
-  }
-
   const client = new Client({
-    connectionString: process.env.NETLIFY_DATABASE_URI,
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
   try {
+    const { id } = JSON.parse(event.body);
+
     await client.connect();
 
-    // Busca o saque
-    const saq = await client.query("SELECT email, valor, status FROM saques WHERE id = $1", [id]);
-    if (saq.rows.length === 0 || saq.rows[0].status !== 'pendente') {
+    // 1. Pega os dados do saque
+    const saque = await client.query('SELECT email, valor FROM saques WHERE id=$1', [id]);
+    if (saque.rows.length === 0) {
       await client.end();
-      return { statusCode: 404, body: JSON.stringify({ error: "Saque não encontrado ou já processado" }) };
+      return { statusCode: 404, body: 'Saque não encontrado' };
     }
 
-    const { email, valor } = saq.rows[0];
+    const { email, valor } = saque.rows[0];
 
-    // Debita do saldo do usuário
-    await client.query("UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2 AND saldo >= $1", [valor, email]);
+    // 2. Atualiza o status para aprovado
+    await client.query('UPDATE saques SET status=$1 WHERE id=$2', ['aprovado', id]);
 
-    // Marca o saque como aprovado
-    await client.query("UPDATE saques SET status = 'aprovado' WHERE id = $1", [id]);
+    // 3. Diminui o saldo do usuário (opcional)
+    await client.query('UPDATE users SET saldo = saldo - $1 WHERE email=$2', [valor, email]);
 
     await client.end();
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
 
-  } catch (error) {
-    console.error("Erro aprovarSaque:", error);
-    return { statusCode: 500, body: JSON.stringify({ error: "Erro interno" }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true })
+    };
+  } catch (err) {
+    console.error("Erro ao aprovar saque:", err);
+    return { statusCode: 500, body: "Erro ao aprovar saque" };
   }
 };
