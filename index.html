@@ -421,38 +421,32 @@ function atualizarEndereco() {
 }
 
 // Função para envio do depósito
-function enviarDeposito() {
-  const valor = document.getElementById("valorDeposito").value;
-  const rede = document.getElementById("redeDeposito").value;
+function confirmarDeposito() {
+  const valor = parseFloat(document.getElementById("valorDeposito").value);
+  const rede = document.getElementById("rede").value;
   const endereco = document.getElementById("enderecoDeposito").value;
-  const arquivo = document.getElementById("comprovativo").files[0];
 
-  if (!valor) {
-    alert("Informe o valor do depósito.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("email", netlifyIdentity.currentUser()?.email);
-  formData.append("valor", valor);
-  formData.append("rede", rede);
-  formData.append("endereco", endereco);
-  if (arquivo) formData.append("comprovativo", arquivo);
+  if (valor < 5) { alert("Depósito mínimo é 5 USDT"); return; }
 
   fetch('/.netlify/functions/solicitarDeposito', {
     method: 'POST',
-    body: formData
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: netlifyIdentity.currentUser()?.email,
+      valor,
+      rede,
+      endereco
+    })
   })
-  .then(res => res.json())
-  .then(data => {
-      alert("Pedido de depósito enviado para análise.");
-      fecharDeposito();
+  .then(r => r.json())
+  .then(() => {
+    alert("Depósito solicitado com sucesso! Aguarde aprovação.");
   })
   .catch(err => {
-      console.error(err);
-      alert("Erro ao enviar pedido de depósito.");
+    console.error(err);
+    alert("Erro ao solicitar depósito.");
   });
-}
+    }
 
 // Chama endereço inicial
 document.addEventListener("DOMContentLoaded", atualizarEndereco);
