@@ -334,3 +334,57 @@
       const nome = user.user_metadata?.full_name || user.email.split('@')[0];
       document.getElementById('userNome').innerText = "Bem-vindo, " + nome;
       fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
+      .catch(err => {
+          console.error(err);
+          alert("Erro ao buscar saldo.");
+        });
+    });
+
+    netlifyIdentity.on('logout', () => {
+      document.querySelector('.container').style.display = 'flex';
+      document.getElementById('mainDashboard').style.display = 'none';
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      netlifyIdentity.init();
+    });
+  </script>
+
+  <script>
+    // Atualiza endereço conforme rede selecionada
+    function atualizarEndereco() {
+      const rede = document.getElementById("redeDeposito").value;
+      const campoEndereco = document.getElementById("enderecoDeposito");
+
+      if (rede === "BEP20") {
+        campoEndereco.value = "0xa339998856200ccdf08599c074c9d4cac0453967";
+      } else if (rede === "TRC20") {
+        campoEndereco.value = "TLr9iaud155quXYbMbEv1kdij9Wdmyg4Vv";
+      } else if (rede === "APTOS") {
+        campoEndereco.value = "0xe24290096705d1657b367fe505494816264a75f343703746201d733f8328d5eb";
+      }
+    }
+
+    // Função para envio do depósito
+    function enviarDeposito() {
+      const valor = document.getElementById("valorDeposito").value;
+      const rede = document.getElementById("redeDeposito").value;
+      const endereco = document.getElementById("enderecoDeposito").value;
+
+      if (!valor) {
+        alert("Informe o valor do depósito.");
+        return;
+      }
+
+      const mensagem = `📥 Depósito Manual\n\nValor: ${valor} USDT\nRede: ${rede}\nEndereço: ${endereco}\nUsuário: ${netlifyIdentity.currentUser()?.email || 'Desconhecido'}`;
+      const linkTelegram = `https://t.me/Kormely?text=${encodeURIComponent(mensagem)}`;
+
+      window.open(linkTelegram, "_blank");
+      fecharDeposito();
+    }
+
+    // Chama endereço inicial ao carregar
+    document.addEventListener("DOMContentLoaded", atualizarEndereco);
+  </script>
+</body>
+</html>
