@@ -337,26 +337,35 @@ setInterval(() => {
     function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
     function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
 
-    function confirmarSaque(){
-  const q = parseFloat(document.getElementById("valorSaque").value);
-  if(q<10){alert("Saque mínimo é 10 USDT");return;}
-  if(q>saldo){alert("Saldo insuficiente");return;}
+    function confirmarSaque() {
+  const valor = parseFloat(document.getElementById("valorSaque").value);
+  const carteira = document.getElementById("enderecoCarteira").value;
+  const rede = document.getElementById("rede").value;
 
-  saldo -= q;
-  atualizarSaldo();
-  fecharModal();
-  alert("Pedido enviado manualmente");
+  if (valor < 10) { alert("Saque mínimo é 10 USDT"); return; }
+  if (valor > saldo) { alert("Saldo insuficiente"); return; }
 
-  // --- NOVO: Atualiza saldo no backend (Netlify Function) ---
-  fetch('/.netlify/functions/updateSaldo', {
+  // Envia solicitação de saque para o backend
+  fetch('/.netlify/functions/solicitarSaque', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: netlifyIdentity.currentUser()?.email,
-      saldo: saldo
+      valor,
+      carteira,
+      rede
     })
-  }).catch(err => console.error("Erro ao atualizar saldo:", err));
-}
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Pedido de saque enviado. Aguarde aprovação.");
+    fecharModal();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao enviar pedido de saque.");
+  });
+    }
 
     function abrirComissao(){
       document.getElementById("painelComissao").style.display="flex";
