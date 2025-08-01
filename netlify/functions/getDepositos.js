@@ -1,8 +1,8 @@
-hereconst { Client } = require('pg');
+const { Client } = require('pg');
 
 exports.handler = async () => {
   const client = new Client({
-    connectionString: process.env.NETLIFY_DATABASE_URI,
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
