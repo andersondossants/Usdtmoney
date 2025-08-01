@@ -25,4 +25,4 @@ exports.handler = async (event) => {
     console.error("Erro solicitarDeposito:", error);
     return { statusCode: 500, body: JSON.stringify({ error: "Erro interno" }) };
   }
-};￼Enter
+};
