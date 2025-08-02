@@ -33,13 +33,12 @@
       margin-bottom: 15px;
     }
     button {
-      width: 100%;
-      padding: 10px;
+      padding: 6px 10px;
       background: #0ea5e9;
       border: none;
       border-radius: 8px;
       color: #fff;
-      font-size: 16px;
+      font-size: 14px;
       cursor: pointer;
     }
     button:hover { background: #22d3ee; }
@@ -93,10 +92,10 @@
       <h2>Pedidos de Depósito</h2>
       <table>
         <thead>
-          <tr><th>Email</th><th>Valor</th><th>Status</th><th>Rede</th><th>Ação</th></tr>
+          <tr><th>Email</th><th>Valor</th><th>Status</th><th>Ação</th></tr>
         </thead>
         <tbody id="tabela-depositos">
-          <tr><td colspan="5">Carregando...</td></tr>
+          <tr><td colspan="4">Carregando...</td></tr>
         </tbody>
       </table>
 
@@ -115,6 +114,7 @@
   <script>
     const ADMIN_EMAIL = "boylouco512@gmail.com";
 
+    // Atualiza saldo do usuário
     async function atualizarSaldo() {
       const email = document.getElementById("email").value.trim();
       const valor = parseFloat(document.getElementById("valor").value);
@@ -155,7 +155,8 @@
       const tabela = document.getElementById('tabelaUsuarios');
       tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
 
-      const data = await (await fetch('/.netlify/functions/getAllUsers')).json();
+      const res = await fetch('/.netlify/functions/getAllUsers');
+      const data = await res.json();
       tabela.innerHTML = '';
 
       data.forEach(user => {
@@ -169,7 +170,8 @@
       const tabela = document.getElementById('tabela-saques');
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
 
-      const data = await (await fetch('/.netlify/functions/getSaques')).json();
+      const res = await fetch('/.netlify/functions/getSaques');
+      const data = await res.json();
       tabela.innerHTML = '';
 
       data.forEach(saq => {
@@ -178,7 +180,7 @@
           <td>${saq.email}</td>
           <td>${saq.valor}</td>
           <td>${saq.status}</td>
-          <td>${saq.status === 'pendente' ? `<button onclick="aprovarSaque('${saq.email}', ${saq.valor})">Aprovar</button>` : ''}</td>
+          <td>${saq.status === 'pendente' ? '<button onclick="aprovarSaque(\\''+saq.email+'\\','+saq.valor+')">Aprovar</button>' : ''}</td>
         `;
         tabela.appendChild(tr);
       });
@@ -186,9 +188,10 @@
 
     async function carregarDepositos() {
       const tabela = document.getElementById('tabela-depositos');
-      tabela.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+      tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
 
-      const data = await (await fetch('/.netlify/functions/getDepositos')).json();
+      const res = await fetch('/.netlify/functions/getDepositos');
+      const data = await res.json();
       tabela.innerHTML = '';
 
       data.forEach(dep => {
@@ -197,8 +200,7 @@
           <td>${dep.email}</td>
           <td>${dep.valor}</td>
           <td>${dep.status}</td>
-          <td>${dep.rede || '-'}</td>
-          <td>${dep.status === 'pendente' ? `<button onclick="aprovarDeposito('${dep.email}', ${dep.valor})">Aprovar</button>` : ''}</td>
+          <td>${dep.status === 'pendente' ? '<button onclick="aprovarDeposito(\\''+dep.email+'\\','+dep.valor+')">Aprovar</button>' : ''}</td>
         `;
         tabela.appendChild(tr);
       });
@@ -241,4 +243,4 @@
     });
   </script>
 </body>
-  </html>
+</html>
