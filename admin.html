@@ -93,10 +93,10 @@
       <h2>Pedidos de Depósito</h2>
       <table>
         <thead>
-          <tr><th>Email</th><th>Valor</th><th>Status</th><th>Rede</th></tr>
+          <tr><th>Email</th><th>Valor</th><th>Status</th><th>Rede</th><th>Ação</th></tr>
         </thead>
         <tbody id="tabela-depositos">
-          <tr><td colspan="4">Carregando...</td></tr>
+          <tr><td colspan="5">Carregando...</td></tr>
         </tbody>
       </table>
 
@@ -156,7 +156,10 @@
       tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
 
       const res = await fetch('/.netlify/functions/getAllUsers');
-      const data = await res.json();
+      const raw = await res.json();
+      console.log("USUÁRIOS:", raw);
+
+      const data = raw.users || raw; // suporta os dois formatos
       tabela.innerHTML = '';
 
       data.forEach(user => {
@@ -171,7 +174,8 @@
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
 
       const res = await fetch('/.netlify/functions/getSaques');
-      const data = await res.json();
+      const raw = await res.json();
+      const data = raw.saques || raw;
       tabela.innerHTML = '';
 
       data.forEach(saq => {
@@ -188,10 +192,11 @@
 
     async function carregarDepositos() {
       const tabela = document.getElementById('tabela-depositos');
-      tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+      tabela.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
 
       const res = await fetch('/.netlify/functions/getDepositos');
-      const data = await res.json();
+      const raw = await res.json();
+      const data = raw.deposito || raw;
       tabela.innerHTML = '';
 
       data.forEach(dep => {
@@ -201,6 +206,7 @@
           <td>${dep.valor}</td>
           <td>${dep.status}</td>
           <td>${dep.rede || '-'}</td>
+          <td>${dep.status === 'pendente' ? `<button onclick="aprovarDeposito('${dep.email}', ${dep.valor})">Aprovar</button>` : ''}</td>
         `;
         tabela.appendChild(tr);
       });
@@ -213,6 +219,16 @@
         body: JSON.stringify({ email, valor })
       });
       carregarSaques();
+      carregarUsuarios();
+    }
+
+    async function aprovarDeposito(email, valor) {
+      await fetch('/.netlify/functions/OrganizaDeposito', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, valor })
+      });
+      carregarDepositos();
       carregarUsuarios();
     }
 
