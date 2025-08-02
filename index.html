@@ -248,7 +248,6 @@
   <label>Valor para depósito (USDT)</label>
   <input type="number" id="valorDeposito" placeholder="Ex: 10">
 
-  <button onclick="solicitarDeposito()">Enviar Depósito</button>
     </div>
     <label for="redeDeposito">Rede</label>
     <select id="redeDeposito" onchange="atualizarEndereco()">
@@ -263,7 +262,7 @@
     <label for="comprovativo">Comprovativo</label>
     <input type="file" id="comprovativo" accept=".jpg,.jpeg,.png,.pdf" />
 
-    <button onclick="enviarDeposito()">Enviar Depósito</button>
+    <button onclick="solicitarDeposito()">Enviar Depósito</button>
     <div class="close-btn" onclick="fecharDeposito()">Fechar</div>
   </div>
 </div>
@@ -422,36 +421,44 @@ function atualizarEndereco() {
     campoEndereco.value = "0xe24290096705d1657b367fe505494816264a75f343703746201d733f8328d5eb";
   }
 }
-
+  </script>
 // Função para envio do depósito
+<script>
 function solicitarDeposito() {
   const valor = parseFloat(document.getElementById("valorDeposito").value);
+  const rede = document.getElementById("redeDeposito").value;
+  const comprovativo = document.getElementById("comprovativo").files[0];
 
   if (valor < 5) {
     alert("Depósito mínimo é 5 USDT");
     return;
   }
 
+  if (!comprovativo) {
+    alert("Por favor, anexe o comprovativo antes de enviar.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("email", netlifyIdentity.currentUser()?.email);
+  formData.append("valor", valor);
+  formData.append("rede", rede);
+  formData.append("comprovativo", comprovativo);
+
   fetch('/.netlify/functions/solicitarDeposito', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: netlifyIdentity.currentUser()?.email,
-      valor
-    })
+    body: formData
   })
   .then(res => res.json())
   .then(() => {
     alert("Pedido de depósito enviado. Aguarde aprovação.");
+    fecharDeposito();
   })
   .catch(err => {
     console.error(err);
     alert("Erro ao enviar pedido de depósito.");
   });
-    }
-
-// Chama endereço inicial
-document.addEventListener("DOMContentLoaded", atualizarEndereco);
-  </script>
+}
+</script>
 </body>
-                                                                  </html>
+</html>
