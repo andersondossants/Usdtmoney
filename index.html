@@ -427,27 +427,20 @@ function atualizarEndereco() {
 function solicitarDeposito() {
   const valor = parseFloat(document.getElementById("valorDeposito").value);
   const rede = document.getElementById("redeDeposito").value;
-  const comprovativo = document.getElementById("comprovativo").files[0];
 
   if (valor < 5) {
     alert("Depósito mínimo é 5 USDT");
     return;
   }
 
-  if (!comprovativo) {
-    alert("Por favor, anexe o comprovativo antes de enviar.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("email", netlifyIdentity.currentUser()?.email);
-  formData.append("valor", valor);
-  formData.append("rede", rede);
-  formData.append("comprovativo", comprovativo);
-
   fetch('/.netlify/functions/solicitarDeposito', {
     method: 'POST',
-    body: formData
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: netlifyIdentity.currentUser()?.email,
+      valor,
+      rede
+    })
   })
   .then(res => res.json())
   .then(() => {
@@ -458,7 +451,7 @@ function solicitarDeposito() {
     console.error(err);
     alert("Erro ao enviar pedido de depósito.");
   });
-}
+  }
 </script>
 </body>
 </html>
