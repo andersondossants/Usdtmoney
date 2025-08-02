@@ -11,7 +11,7 @@ exports.handler = async (event) => {
 
     await client.connect();
 
-    // Busca dados do depósito
+    // Busca o depósito pelo id
     const deposito = await client.query('SELECT email, valor FROM depositos WHERE id=$1', [id]);
     if (deposito.rows.length === 0) {
       await client.end();
@@ -23,14 +23,13 @@ exports.handler = async (event) => {
     // Aprova depósito
     await client.query('UPDATE depositos SET status=$1 WHERE id=$2', ['aprovado', id]);
 
-    // Aumenta saldo do usuário
+    // Aumenta saldo
     await client.query('UPDATE usuarios SET saldo = saldo + $1 WHERE email=$2', [valor, email]);
 
     await client.end();
-
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (err) {
-    console.error("Erro ao aprovar depósito:", err);
-    return { statusCode: 500, body: "Erro ao aprovar depósito" };
+    console.error('Erro ao aprovar depósito:', err);
+    return { statusCode: 500, body: 'Erro ao aprovar depósito' };
   }
 };
