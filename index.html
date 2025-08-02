@@ -244,9 +244,12 @@
   <div class="modal-content">
     <h3>Depósito Manual</h3>
 
-    <label for="valorDeposito">Valor (USDT)</label>
-    <input type="number" id="valorDeposito" placeholder="Ex: 50" />
+    <div class="form-box">
+  <label>Valor para depósito (USDT)</label>
+  <input type="number" id="valorDeposito" placeholder="Ex: 10">
 
+  <button onclick="solicitarDeposito()">Enviar Depósito</button>
+    </div>
     <label for="redeDeposito">Rede</label>
     <select id="redeDeposito" onchange="atualizarEndereco()">
       <option value="BEP20">BEP20 (Binance Smart Chain)</option>
