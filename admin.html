@@ -200,13 +200,15 @@ async function carregarDepositos() {
       <td>${dep.email}</td>
       <td>${dep.valor}</td>
       <td>${dep.status}</td>
-      <td>${dep.status === 'pendente'
-        ? `<button onclick="aprovarDeposito('${dep.email}', ${dep.valor})">Aprovar</button>`
-        : ''}</td>
+      <td>${
+        dep.status === 'pendente'
+          ? `<button onclick="aprovarDeposito(${dep.id})">Aprovar</button>`
+          : ''
+      }</td>
     `;
     tabela.appendChild(tr);
   });
-}
+  }
 
 async function aprovarSaque(email, valor) {
   await fetch('/.netlify/functions/ColeSaque', {
@@ -218,15 +220,15 @@ async function aprovarSaque(email, valor) {
   carregarUsuarios();
 }
 
-async function aprovarDeposito(email, valor) {
+async function aprovarDeposito(id) {
   await fetch('/.netlify/functions/OrganizaDeposito', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, valor })
+    body: JSON.stringify({ id })
   });
   carregarDepositos();
   carregarUsuarios();
-}
+  }
 
 function carregarTudo() {
   carregarUsuarios();
