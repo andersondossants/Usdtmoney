@@ -151,6 +151,7 @@
       }
     }
 
+    // Carrega lista de usuários
     async function carregarUsuarios() {
       const tabela = document.getElementById('tabelaUsuarios');
       tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
@@ -166,6 +167,7 @@
       });
     }
 
+    // Carrega pedidos de saque
     async function carregarSaques() {
       const tabela = document.getElementById('tabela-saques');
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
@@ -180,12 +182,17 @@
           <td>${saq.email}</td>
           <td>${saq.valor}</td>
           <td>${saq.status}</td>
-          <td>${saq.status === 'pendente' ? '<button onclick="aprovarSaque(\\''+saq.email+'\\','+saq.valor+')">Aprovar</button>' : ''}</td>
+          <td>
+            ${saq.status === 'pendente'
+              ? `<button onclick="aprovarSaque('${saq.email}', ${saq.valor})">Aprovar</button>`
+              : ''}
+          </td>
         `;
         tabela.appendChild(tr);
       });
     }
 
+    // Carrega pedidos de depósito
     async function carregarDepositos() {
       const tabela = document.getElementById('tabela-depositos');
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
@@ -200,12 +207,17 @@
           <td>${dep.email}</td>
           <td>${dep.valor}</td>
           <td>${dep.status}</td>
-          <td>${dep.status === 'pendente' ? '<button onclick="aprovarDeposito(\\''+dep.email+'\\','+dep.valor+')">Aprovar</button>' : ''}</td>
+          <td>
+            ${dep.status === 'pendente'
+              ? `<button onclick="aprovarDeposito('${dep.email}', ${dep.valor})">Aprovar</button>`
+              : ''}
+          </td>
         `;
         tabela.appendChild(tr);
       });
     }
 
+    // Aprova saque
     async function aprovarSaque(email, valor) {
       await fetch('/.netlify/functions/ColeSaque', {
         method: 'POST',
@@ -216,6 +228,7 @@
       carregarUsuarios();
     }
 
+    // Aprova depósito
     async function aprovarDeposito(email, valor) {
       await fetch('/.netlify/functions/OrganizaDeposito', {
         method: 'POST',
@@ -226,12 +239,14 @@
       carregarUsuarios();
     }
 
+    // Carrega tudo
     function carregarTudo() {
       carregarUsuarios();
       carregarSaques();
       carregarDepositos();
     }
 
+    // Login com Netlify Identity
     netlifyIdentity.on('login', user => {
       if (user.email === ADMIN_EMAIL) {
         document.getElementById('loginContainer').style.display = 'none';
@@ -243,4 +258,4 @@
     });
   </script>
 </body>
-</html>
+                            </html>
