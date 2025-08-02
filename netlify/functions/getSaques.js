@@ -8,19 +8,13 @@ exports.handler = async () => {
 
   try {
     await client.connect();
-
     const result = await client.query(
       "SELECT id, email, valor, status FROM saques ORDER BY id DESC"
     );
-
     await client.end();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify(result.rows)
-    };
+    return { statusCode: 200, body: JSON.stringify(result.rows) };
   } catch (err) {
-    console.error("Erro ao buscar saques:", err);
-    return { statusCode: 500, body: "Erro ao buscar saques" };
+    console.error("Erro ao carregar saques:", err);
+    return { statusCode: 500, body: "Erro ao carregar saques" };
   }
 };
