@@ -9,9 +9,9 @@ exports.handler = async () => {
   try {
     await client.connect();
 
-    // Busca todos os pedidos de saque
+    // Busca todos os pedidos de depósito
     const result = await client.query(
-      'SELECT id, email, valor, status FROM saques ORDER BY id DESC'
+      'SELECT id, email, valor, status, rede FROM depositos ORDER BY id DESC'
     );
 
     await client.end();
@@ -21,7 +21,7 @@ exports.handler = async () => {
       body: JSON.stringify(result.rows)
     };
   } catch (err) {
-    console.error("Erro ao listar saques:", err);
-    return { statusCode: 500, body: "Erro ao buscar saques" };
+    console.error("Erro ao listar depósitos:", err);
+    return { statusCode: 500, body: "Erro ao buscar depósitos" };
   }
 };
