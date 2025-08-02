@@ -1,19 +1,36 @@
-const fs = require('fs');
-const path = require('path');
-const filePath = path.join(__dirname, 'data.json');
+const { Client } = require('pg');
 
 exports.handler = async (event) => {
-  const { email, valor } = JSON.parse(event.body);
-  const raw = fs.readFileSync(filePath);
-  const db = JSON.parse(raw);
+  try {
+    const { id } = JSON.parse(event.body);
 
-  const dep = db.depositos.find(d => d.email === email && d.valor == valor && d.status === "pendente");
-  if (dep) dep.status = "aprovado";
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
 
-  const user = db.users.find(u => u.email === email);
-  if (user) user.saldo = parseFloat(user.saldo) + parseFloat(valor);
+    await client.connect();
 
-  fs.writeFileSync(filePath, JSON.stringify(db, null, 2));
+    // Busca dados do depósito
+    const deposito = await client.query('SELECT email, valor FROM depositos WHERE id=$1', [id]);
+    if (deposito.rows.length === 0) {
+      await client.end();
+      return { statusCode: 404, body: 'Depósito não encontrado' };
+    }
 
-  return { statusCode: 200, body: JSON.stringify({ message: "Depósito aprovado" }) };
+    const { email, valor } = deposito.rows[0];
+
+    // Aprova depósito
+    await client.query('UPDATE depositos SET status=$1 WHERE id=$2', ['aprovado', id]);
+
+    // Aumenta saldo do usuário
+    await client.query('UPDATE usuarios SET saldo = saldo + $1 WHERE email=$2', [valor, email]);
+
+    await client.end();
+
+    return { statusCode: 200, body: JSON.stringify({ success: true }) };
+  } catch (err) {
+    console.error("Erro ao aprovar depósito:", err);
+    return { statusCode: 500, body: "Erro ao aprovar depósito" };
+  }
 };
