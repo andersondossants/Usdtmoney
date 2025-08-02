@@ -223,8 +223,21 @@ async function aprovarDeposito(id) {
   });
   carregarDepositos();
   carregarUsuarios();
+}
+
+function carregarTudo() {
+  carregarUsuarios();
+  carregarSaques();
+  carregarDepositos();
+}
+
+netlifyIdentity.on('login', user => {
+  if (user.email === ADMIN_EMAIL) {
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('painel').style.display = 'flex';
+    carregarTudo();
+  } else {
+    alert('Acesso negado!');
   }
 });
 </script>
-</body>
-                         </html>
