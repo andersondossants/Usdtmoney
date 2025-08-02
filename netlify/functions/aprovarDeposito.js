@@ -1,39 +1,24 @@
-const { Client } = require('pg');
+const fs = require('fs');
+const path = require('path');
+const filePath = path.join(__dirname, 'data.json');
 
 exports.handler = async (event) => {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
+  const { email, valor } = JSON.parse(event.body);
+  const raw = fs.readFileSync(filePath);
+  const db = JSON.parse(raw);
 
-  try {
-    const { id } = JSON.parse(event.body);
+  // Atualizar status do depósito
+  const dep = db.depositos.find(d => d.email === email && d.valor == valor && d.status === "pendente");
+  if (dep) dep.status = "aprovado";
 
-    await client.connect();
+  // Atualizar saldo do usuário
+  const user = db.users.find(u => u.email === email);
+  if (user) user.saldo = parseFloat(user.saldo) + parseFloat(valor);
 
-    // 1. Pega os dados do saque
-    const saque = await client.query('SELECT email, valor FROM depositos WHERE id=$1', [id]);
-    if (saque.rows.length === 0) {
-      await client.end();
-      return { statusCode: 404, body: 'Deposito não encontrado' };
-    }
+  fs.writeFileSync(filePath, JSON.stringify(db, null, 2));
 
-    const { email, valor } = saque.rows[0];
-
-    // 2. Atualiza o status para aprovado
-    await client.query('UPDATE depositos SET status=$1 WHERE id=$2', ['aprovado', id]);
-
-    // 3. Diminui o saldo do usuário (opcional)
-    await client.query('UPDATE usuarios SET saldo = saldo - $1 WHERE email=$2', [valor, email]);
-
-    await client.end();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true })
-    };
-  } catch (err) {
-    console.error("Erro ao aprovar deposito:", err);
-    return { statusCode: 500, body: "Erro ao aprovar deposito" };
-  }
+  return {
+    statusCode: 200,
+    body: JSON.stringify({ message: "Depósito aprovado" })
+  };
 };
