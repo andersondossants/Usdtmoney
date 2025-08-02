@@ -155,11 +155,7 @@
       const tabela = document.getElementById('tabelaUsuarios');
       tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
 
-      const res = await fetch('/.netlify/functions/getAllUsers');
-      const raw = await res.json();
-      console.log("USUÁRIOS:", raw);
-
-      const data = raw.users || raw; // suporta os dois formatos
+      const data = await (await fetch('/.netlify/functions/getAllUsers')).json();
       tabela.innerHTML = '';
 
       data.forEach(user => {
@@ -173,9 +169,7 @@
       const tabela = document.getElementById('tabela-saques');
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
 
-      const res = await fetch('/.netlify/functions/getSaques');
-      const raw = await res.json();
-      const data = raw.saques || raw;
+      const data = await (await fetch('/.netlify/functions/getSaques')).json();
       tabela.innerHTML = '';
 
       data.forEach(saq => {
@@ -194,9 +188,7 @@
       const tabela = document.getElementById('tabela-depositos');
       tabela.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
 
-      const res = await fetch('/.netlify/functions/getDepositos');
-      const raw = await res.json();
-      const data = raw.deposito || raw;
+      const data = await (await fetch('/.netlify/functions/getDepositos')).json();
       tabela.innerHTML = '';
 
       data.forEach(dep => {
@@ -249,4 +241,4 @@
     });
   </script>
 </body>
-</html>
+  </html>
