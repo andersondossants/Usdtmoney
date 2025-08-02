@@ -110,152 +110,139 @@
       </table>
     </div>
   </div>
+<script>
+const ADMIN_EMAIL = "boylouco512@gmail.com";
 
-  <script>
-    const ADMIN_EMAIL = "boylouco512@gmail.com";
+async function atualizarSaldo() {
+  const email = document.getElementById("email").value.trim();
+  const valor = parseFloat(document.getElementById("valor").value);
+  const msg = document.getElementById("msg");
+  msg.innerText = "";
 
-    // Atualiza saldo do usuário
-    async function atualizarSaldo() {
-      const email = document.getElementById("email").value.trim();
-      const valor = parseFloat(document.getElementById("valor").value);
-      const msg = document.getElementById("msg");
-      msg.innerText = "";
+  if (!email || isNaN(valor)) {
+    msg.innerText = "Preencha corretamente os campos!";
+    return;
+  }
 
-      if (!email || isNaN(valor)) {
-        msg.innerText = "Preencha corretamente os campos!";
-        return;
-      }
+  try {
+    const res = await fetch(`/.netlify/functions/getSaldo?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
 
-      try {
-        const res = await fetch(`/.netlify/functions/getSaldo?email=${encodeURIComponent(email)}`);
-        const data = await res.json();
-
-        if (data.saldo === undefined) {
-          msg.innerText = "Usuário não encontrado!";
-          return;
-        }
-
-        const novoSaldo = (parseFloat(data.saldo) + valor).toFixed(2);
-
-        await fetch('/.netlify/functions/updateSaldo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, saldo: novoSaldo })
-        });
-
-        msg.innerText = "Saldo atualizado!";
-        carregarUsuarios();
-      } catch (err) {
-        console.error(err);
-        msg.innerText = "Erro ao atualizar saldo.";
-      }
+    if (data.saldo === undefined) {
+      msg.innerText = "Usuário não encontrado!";
+      return;
     }
 
-    // Carrega lista de usuários
-    async function carregarUsuarios() {
-      const tabela = document.getElementById('tabelaUsuarios');
-      tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
+    const novoSaldo = (parseFloat(data.saldo) + valor).toFixed(2);
 
-      const res = await fetch('/.netlify/functions/getAllUsers');
-      const data = await res.json();
-      tabela.innerHTML = '';
-
-      data.forEach(user => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${user.email}</td><td>${user.saldo}</td>`;
-        tabela.appendChild(tr);
-      });
-    }
-
-    // Carrega pedidos de saque
-    async function carregarSaques() {
-      const tabela = document.getElementById('tabela-saques');
-      tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
-
-      const res = await fetch('/.netlify/functions/getSaques');
-      const data = await res.json();
-      tabela.innerHTML = '';
-
-      data.forEach(saq => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${saq.email}</td>
-          <td>${saq.valor}</td>
-          <td>${saq.status}</td>
-          <td>
-            ${saq.status === 'pendente'
-              ? `<button onclick="aprovarSaque('${saq.email}', ${saq.valor})">Aprovar</button>`
-              : ''}
-          </td>
-        `;
-        tabela.appendChild(tr);
-      });
-    }
-
-    // Carrega pedidos de depósito
-    async function carregarDepositos() {
-      const tabela = document.getElementById('tabela-depositos');
-      tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
-
-      const res = await fetch('/.netlify/functions/getDepositos');
-      const data = await res.json();
-      tabela.innerHTML = '';
-
-      data.forEach(dep => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${dep.email}</td>
-          <td>${dep.valor}</td>
-          <td>${dep.status}</td>
-          <td>
-            ${dep.status === 'pendente'
-              ? `<button onclick="aprovarDeposito('${dep.email}', ${dep.valor})">Aprovar</button>`
-              : ''}
-          </td>
-        `;
-        tabela.appendChild(tr);
-      });
-    }
-
-    // Aprova saque
-    async function aprovarSaque(email, valor) {
-      await fetch('/.netlify/functions/ColeSaque', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, valor })
-      });
-      carregarSaques();
-      carregarUsuarios();
-    }
-
-    // Aprova depósito
-    async function aprovarDeposito(email, valor) {
-      await fetch('/.netlify/functions/OrganizaDeposito', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, valor })
-      });
-      carregarDepositos();
-      carregarUsuarios();
-    }
-
-    // Carrega tudo
-    function carregarTudo() {
-      carregarUsuarios();
-      carregarSaques();
-      carregarDepositos();
-    }
-
-    // Login com Netlify Identity
-    netlifyIdentity.on('login', user => {
-      if (user.email === ADMIN_EMAIL) {
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('painel').style.display = 'flex';
-        carregarTudo();
-      } else {
-        alert('Acesso negado!');
-      }
+    await fetch('/.netlify/functions/updateSaldo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, saldo: novoSaldo })
     });
-  </script>
+
+    msg.innerText = "Saldo atualizado!";
+    carregarUsuarios();
+  } catch (err) {
+    console.error(err);
+    msg.innerText = "Erro ao atualizar saldo.";
+  }
+}
+
+async function carregarUsuarios() {
+  const tabela = document.getElementById('tabelaUsuarios');
+  tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
+
+  const res = await fetch(`/.netlify/functions/getAllUsers?email=${encodeURIComponent(ADMIN_EMAIL)}`);
+  const data = await res.json();
+  tabela.innerHTML = '';
+
+  data.forEach(user => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${user.email}</td><td>${user.saldo}</td>`;
+    tabela.appendChild(tr);
+  });
+}
+
+async function carregarSaques() {
+  const tabela = document.getElementById('tabela-saques');
+  tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+
+  const res = await fetch('/.netlify/functions/getSaques');
+  const data = await res.json();
+  tabela.innerHTML = '';
+
+  data.forEach(saq => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${saq.email}</td>
+      <td>${saq.valor}</td>
+      <td>${saq.status}</td>
+      <td>${saq.status === 'pendente'
+        ? `<button onclick="aprovarSaque('${saq.email}', ${saq.valor})">Aprovar</button>`
+        : ''}</td>
+    `;
+    tabela.appendChild(tr);
+  });
+}
+
+async function carregarDepositos() {
+  const tabela = document.getElementById('tabela-depositos');
+  tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+
+  const res = await fetch('/.netlify/functions/getDepositos');
+  const data = await res.json();
+  tabela.innerHTML = '';
+
+  data.forEach(dep => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${dep.email}</td>
+      <td>${dep.valor}</td>
+      <td>${dep.status}</td>
+      <td>${dep.status === 'pendente'
+        ? `<button onclick="aprovarDeposito('${dep.email}', ${dep.valor})">Aprovar</button>`
+        : ''}</td>
+    `;
+    tabela.appendChild(tr);
+  });
+}
+
+async function aprovarSaque(email, valor) {
+  await fetch('/.netlify/functions/ColeSaque', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, valor })
+  });
+  carregarSaques();
+  carregarUsuarios();
+}
+
+async function aprovarDeposito(email, valor) {
+  await fetch('/.netlify/functions/OrganizaDeposito', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, valor })
+  });
+  carregarDepositos();
+  carregarUsuarios();
+}
+
+function carregarTudo() {
+  carregarUsuarios();
+  carregarSaques();
+  carregarDepositos();
+}
+
+netlifyIdentity.on('login', user => {
+  if (user.email === ADMIN_EMAIL) {
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('painel').style.display = 'flex';
+    carregarTudo();
+  } else {
+    alert('Acesso negado!');
+  }
+});
+</script>
 </body>
-                            </html>
+</html>
