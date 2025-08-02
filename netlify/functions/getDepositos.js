@@ -1,24 +1,35 @@
-const { Client } = require('pg');
+import { Client } from 'pg';
 
-exports.handler = async () => {
+export const handler = async () => {
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
   });
 
   try {
     await client.connect();
-    const result = await client.query(
-      "SELECT id, email, valor, status FROM depositos ORDER BY id DESC"
-    );
+
+    const result = await client.query(`
+      SELECT id, email, valor, rede, status, criado_em
+      FROM depositos
+      ORDER BY criado_em DESC
+    `);
+
     await client.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify(result.rows)
+      body: JSON.stringify(result.rows),
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*', // caso precise acessar de outro domínio
+      },
     };
-  } catch (error) {
-    console.error("Erro getDepositos:", error);
-    return { statusCode: 500, body: JSON.stringify({ error: "Erro interno" }) };
+  } catch (err) {
+    console.error('Erro ao buscar depósitos:', err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Erro ao buscar depósitos' }),
+    };
   }
 };
