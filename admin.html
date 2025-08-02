@@ -51,18 +51,15 @@
   </style>
 </head>
 <body>
-  <!-- Tela de login -->
   <div class="login-container" id="loginContainer">
     <h1>Administração</h1>
     <p>Faça login para acessar o painel</p>
     <button onclick="netlifyIdentity.open()">Login</button>
   </div>
 
-  <!-- Painel de administração -->
   <div id="painel" style="display:none; width:100%; align-items:center; flex-direction:column;">
     <h1>Painel de Administração</h1>
 
-    <!-- Formulário de atualização de saldo -->
     <div class="form-box">
       <label>Email do usuário</label>
       <input type="email" id="email" placeholder="usuario@teste.com">
@@ -74,7 +71,6 @@
       <div class="msg" id="msg"></div>
     </div>
 
-    <!-- Lista de usuários -->
     <div id="usuarios">
       <h2>Lista de Usuários</h2>
       <table>
@@ -87,7 +83,6 @@
       </table>
     </div>
 
-    <!-- Pedidos de depósito e saque -->
     <div id="pedidos">
       <h2>Pedidos de Depósito</h2>
       <table>
@@ -114,7 +109,6 @@
   <script>
     const ADMIN_EMAIL = "boylouco512@gmail.com";
 
-    // Atualiza saldo do usuário
     async function atualizarSaldo() {
       const email = document.getElementById("email").value.trim();
       const valor = parseFloat(document.getElementById("valor").value);
@@ -154,11 +148,9 @@
     async function carregarUsuarios() {
       const tabela = document.getElementById('tabelaUsuarios');
       tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
-
-      const res = await fetch('/.netlify/functions/getAllUsers');
+      const res = await fetch('/.netlify/functions/getAllUsers?email=' + encodeURIComponent(ADMIN_EMAIL));
       const data = await res.json();
       tabela.innerHTML = '';
-
       data.forEach(user => {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td>${user.email}</td><td>${user.saldo}</td>`;
@@ -169,19 +161,16 @@
     async function carregarSaques() {
       const tabela = document.getElementById('tabela-saques');
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
-
       const res = await fetch('/.netlify/functions/getSaques');
       const data = await res.json();
       tabela.innerHTML = '';
-
-      // Para cada saque, use o id no botão
       data.forEach(saq => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${saq.email}</td>
           <td>${saq.valor}</td>
           <td>${saq.status}</td>
-          <td>${saq.status === 'pendente' ? `<button onclick="aprovarSaque('${saq.id}')">Aprovar</button>` : ''}</td>
+          <td>${saq.status === 'pendente' ? `<button onclick="aprovarSaque(${saq.id})">Aprovar</button>` : ''}</td>
         `;
         tabela.appendChild(tr);
       });
@@ -190,11 +179,9 @@
     async function carregarDepositos() {
       const tabela = document.getElementById('tabela-depositos');
       tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
-
       const res = await fetch('/.netlify/functions/getDepositos');
       const data = await res.json();
       tabela.innerHTML = '';
-
       data.forEach(dep => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -208,7 +195,6 @@
     }
 
     async function aprovarSaque(id) {
-      // Para Neon, envia apenas id
       await fetch('/.netlify/functions/ColeSaque', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +205,6 @@
     }
 
     async function aprovarDeposito(email, valor) {
-      // Para arquivo JSON, continua usando email e valor
       await fetch('/.netlify/functions/OrganizaDeposito', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
