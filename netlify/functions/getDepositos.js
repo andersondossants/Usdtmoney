@@ -1,13 +1,20 @@
-const fs = require('fs');
-const path = require('path');
-const filePath = path.join(__dirname, 'data.json');
+const { Client } = require('pg');
 
 exports.handler = async () => {
-  const raw = fs.readFileSync(filePath);
-  const db = JSON.parse(raw);
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify(db.depositos || [])
-  };
+  try {
+    await client.connect();
+    const result = await client.query(
+      "SELECT id, email, valor, status FROM depositos ORDER BY id DESC"
+    );
+    await client.end();
+    return { statusCode: 200, body: JSON.stringify(result.rows) };
+  } catch (err) {
+    console.error("Erro ao carregar depósitos:", err);
+    return { statusCode: 500, body: "Erro ao carregar depósitos" };
+  }
 };
