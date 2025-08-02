@@ -178,17 +178,25 @@ async function carregarSaques() {
       <td>${saq.email}</td>
       <td>${saq.valor}</td>
       <td>${saq.status}</td>
-      <td>${saq.status === 'pendente'
-        ? `<button onclick="aprovarSaque('${saq.email}', ${saq.valor})">Aprovar</button>`
-        : ''}</td>
+      <td>${saq.status === 'pendente' ? `<button onclick="aprovarSaque('${saq.id}')">Aprovar</button>` : ''}</td>
     `;
     tabela.appendChild(tr);
   });
 }
 
+async function aprovarSaque(id) {
+  await fetch('/.netlify/functions/ColeSaque', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  carregarSaques();
+  carregarUsuarios();
+}
+
 async function carregarDepositos() {
   const tabela = document.getElementById('tabela-depositos');
-  tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+  tabela.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
 
   const res = await fetch('/.netlify/functions/getDepositos');
   const data = await res.json();
@@ -200,24 +208,11 @@ async function carregarDepositos() {
       <td>${dep.email}</td>
       <td>${dep.valor}</td>
       <td>${dep.status}</td>
-      <td>${
-        dep.status === 'pendente'
-          ? `<button onclick="aprovarDeposito(${dep.id})">Aprovar</button>`
-          : ''
-      }</td>
+      <td>${dep.rede || '-'}</td>
+      <td>${dep.status === 'pendente' ? `<button onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` : ''}</td>
     `;
     tabela.appendChild(tr);
   });
-  }
-
-async function aprovarSaque(email, valor) {
-  await fetch('/.netlify/functions/ColeSaque', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, valor })
-  });
-  carregarSaques();
-  carregarUsuarios();
 }
 
 async function aprovarDeposito(id) {
@@ -228,21 +223,6 @@ async function aprovarDeposito(id) {
   });
   carregarDepositos();
   carregarUsuarios();
-  }
-
-function carregarTudo() {
-  carregarUsuarios();
-  carregarSaques();
-  carregarDepositos();
-}
-
-netlifyIdentity.on('login', user => {
-  if (user.email === ADMIN_EMAIL) {
-    document.getElementById('loginContainer').style.display = 'none';
-    document.getElementById('painel').style.display = 'flex';
-    carregarTudo();
-  } else {
-    alert('Acesso negado!');
   }
 });
 </script>
