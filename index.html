@@ -386,12 +386,24 @@ setInterval(() => {
   });
     }
 
-    function abrirComissao(){
-      document.getElementById("painelComissao").style.display="flex";
-      document.getElementById("linkConvite").value=window.location.origin+"?ref=meuemail";
-      document.getElementById("listaIndicados").innerHTML=indicados.map(i=>"<li>"+i+"</li>").join("");
-      document.getElementById("comissao-total2").innerText=comissao.toFixed(2);
-    }
+    function abrirComissao() {
+  const painel = document.getElementById("painelComissao");
+  painel.style.display = "flex";
+
+  // Pega email do usuário logado no Netlify Identity
+  const emailUsuario = netlifyIdentity.currentUser()?.email || "";
+
+  // Gera link de convite dinâmico
+  document.getElementById("linkConvite").value =
+    window.location.origin + "?ref=" + encodeURIComponent(emailUsuario);
+
+  // Atualiza lista de indicados
+  document.getElementById("listaIndicados").innerHTML =
+    indicados.map(i => "<li>" + i + "</li>").join("");
+
+  // Atualiza total de comissão
+  document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+      }
     function fecharComissao(){document.getElementById("painelComissao").style.display="none";}
 // Captura ?ref= do link
 let referencia = null;
