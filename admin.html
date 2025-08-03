@@ -187,12 +187,15 @@ async function carregarDepositos() {
   data.forEach(dep => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${dep.email}</td>
-      <td>${dep.valor}</td>
-      <td>${dep.status}</td>
-      <td>${dep.rede || '-'}</td>
-      <td>${dep.status === 'pendente' ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` : ''}</td>
-    `;
+  <td>${dep.email}</td>
+  <td>${dep.valor}</td>
+  <td>${dep.status}</td>
+  <td>${dep.rede || '-'}</td>
+  <td>
+    ${dep.status === 'pendente' ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` : ''}
+    ${dep.comprovativo ? `<a href="${dep.comprovativo}" target="_blank">Ver Comprovativo</a>` : ''}
+  </td>
+`;
     tabela.appendChild(tr);
   });
 }
