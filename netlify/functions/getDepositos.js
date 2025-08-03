@@ -9,9 +9,9 @@ exports.handler = async () => {
   try {
     await client.connect();
 
-    // Busca todos os depósitos
+    // Incluímos o campo comprovativo na seleção
     const result = await client.query(
-      'SELECT id, email, valor, status, rede FROM depositos ORDER BY id DESC'
+      'SELECT id, email, valor, status, rede, comprovativo FROM depositos ORDER BY id DESC'
     );
 
     await client.end();
