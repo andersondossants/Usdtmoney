@@ -20,7 +20,7 @@ export async function handler(event) {
 
     // Buscar o saque pelo id
     const result = await client.query(
-      'SELECT email, valentia FROM saques WHERE id = $1',
+      'SELECT email, valor FROM saques WHERE id = $1',
       [id]
     );
 
@@ -32,7 +32,7 @@ export async function handler(event) {
       };
     }
 
-    const { email, valentia } = result.rows[0];
+    const { email, valor } = result.rows[0];
 
     // Atualizar status do saque
     await client.query(
@@ -43,7 +43,7 @@ export async function handler(event) {
     // Subtrair o saldo do usuário
     await client.query(
       'UPDATE usuarios SET saldo = saldo - $1 WHERE LOWER(email) = LOWER($2)',
-      [valentia, email]
+      [valor, email]
     );
 
     await client.end();
