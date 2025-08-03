@@ -1,24 +1,22 @@
 import { Client } from 'pg';
 
 export async function handler(event) {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+
   try {
     const { id } = JSON.parse(event.body);
-
-    const client = new Client({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false },
-    });
-
     await client.connect();
 
-    // 1. Buscar dados do saque
+    // 1. Buscar email e valor do saque
     const result = await client.query(
       'SELECT email, valor FROM saques WHERE id = $1',
       [id]
     );
 
     if (result.rows.length === 0) {
-      await client.end();
       return {
         statusCode: 404,
         body: JSON.stringify({ error: 'Saque não encontrado' }),
@@ -27,19 +25,19 @@ export async function handler(event) {
 
     const { email, valor } = result.rows[0];
 
-    // 2. Atualizar status do saque
+    // 2. Aprovar o saque
     await client.query(
       "UPDATE saques SET status = 'aprovado' WHERE id = $1",
       [id]
     );
 
-    // 3. Subtrair saldo do usuário
+    // 3. Atualizar saldo do usuário
     await client.query(
-      "UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2",
+      `UPDATE usuarios 
+       SET saldo = saldo - $1 
+       WHERE TRIM(LOWER(email)) = TRIM(LOWER($2))`,
       [valor, email]
     );
-
-    await client.end();
 
     return {
       statusCode: 200,
@@ -51,5 +49,7 @@ export async function handler(event) {
       statusCode: 500,
       body: JSON.stringify({ error: 'Erro interno ao aprovar saque' }),
     };
+  } finally {
+    await client.end();
   }
-        }
+}
