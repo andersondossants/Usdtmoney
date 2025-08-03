@@ -8,17 +8,24 @@ exports.handler = async () => {
 
   try {
     await client.connect();
+
+    // Busca todos os depósitos
     const result = await client.query(
       'SELECT id, email, valor, status, rede FROM depositos ORDER BY id DESC'
     );
+
     await client.end();
 
     return {
       statusCode: 200,
       body: JSON.stringify(result.rows)
     };
-  } catch (err) {
-    console.error('Erro getDepositos:', err);
-    return { statusCode: 500, body: 'Erro no servidor' };
+
+  } catch (error) {
+    console.error("Erro ao carregar depósitos:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message })
+    };
   }
 };
