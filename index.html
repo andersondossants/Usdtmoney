@@ -430,7 +430,12 @@ if (urlParams.has('ref')) {
       })
     }).catch(err => console.error("Erro ao salvar referência:", err));
       }
-      
+      // Registrar usuário no banco
+fetch('/.netlify/functions/registrarUsuario', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: user.email })
+});
   // Buscar saldo real do banco Neon
   fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
     .then(res => res.json())
