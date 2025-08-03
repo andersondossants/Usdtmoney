@@ -81,15 +81,19 @@
       <h2>Pedidos de Depósito</h2>
       <table>
         <thead>
-<tr>
-  <th>Email</th>
-  <th>Valor</th>
-  <th>Status</th>
-  <th>Rede</th>
-  <th>Comprovativo</th>
-  <th>Ação</th>
-</tr>
+          <tr>
+            <th>Email</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Rede</th>
+            <th>Comprovativo</th>
+            <th>Ação</th>
+          </tr>
         </thead>
+        <tbody id="tabela-depositos">
+          <tr><td colspan="6">Carregando...</td></tr>
+        </tbody>
+      </table>
 
       <h2>Pedidos de Saque</h2>
       <table>
@@ -166,7 +170,7 @@ async function carregarSaques() {
   });
 }
 
-// Aprova saque (corrigido para aprovarSaque.js)
+// Aprova saque
 async function aprovarSaque(id) {
   try {
     const res = await fetch('/.netlify/functions/aprovarSaque', {
@@ -213,9 +217,9 @@ async function carregarDepositos() {
     `;
     tabela.appendChild(tr);
   });
-                          }
+}
 
-// Aprova depósito (corrigido para aprovarDeposito.js)
+// Aprova depósito
 async function aprovarDeposito(id) {
   try {
     const res = await fetch('/.netlify/functions/aprovarDeposito', {
