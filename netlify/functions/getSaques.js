@@ -8,12 +8,9 @@ exports.handler = async () => {
 
   try {
     await client.connect();
-
-    // Busca todos os pedidos de saque
     const result = await client.query(
       'SELECT id, email, valor, status FROM saques ORDER BY id DESC'
     );
-
     await client.end();
 
     return {
@@ -21,7 +18,7 @@ exports.handler = async () => {
       body: JSON.stringify(result.rows)
     };
   } catch (err) {
-    console.error("Erro ao listar saques:", err);
-    return { statusCode: 500, body: "Erro ao buscar saques" };
+    console.error('Erro getSaques:', err);
+    return { statusCode: 500, body: 'Erro no servidor' };
   }
 };
