@@ -159,10 +159,10 @@ async function carregarSaques() {
   });
 }
 
-// Aprova saque
+// Aprova saque (corrigido para aprovarSaque.js)
 async function aprovarSaque(id) {
   try {
-    const res = await fetch('/.netlify/functions/ColeSaque', {
+    const res = await fetch('/.netlify/functions/aprovarSaque', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
@@ -197,10 +197,10 @@ async function carregarDepositos() {
   });
 }
 
-// Aprova depósito
+// Aprova depósito (corrigido para aprovarDeposito.js)
 async function aprovarDeposito(id) {
   try {
-    const res = await fetch('/.netlify/functions/OrganizaDeposito', {
+    const res = await fetch('/.netlify/functions/aprovarDeposito', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
@@ -236,4 +236,4 @@ netlifyIdentity.on('login', user => {
 });
 </script>
 </body>
-  </html>
+</html>
