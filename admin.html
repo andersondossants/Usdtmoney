@@ -65,7 +65,7 @@
       <input type="email" id="email" placeholder="usuario@teste.com">
       <label>Valor a adicionar (USDT)</label>
       <input type="number" id="valor" placeholder="Ex: 50">
-      <button onclick="atualizarSaldo()">Atualizar Saldo</button>
+      <button type="button" onclick="atualizarSaldo()">Atualizar Saldo</button>
       <div class="msg" id="msg"></div>
     </div>
 
@@ -95,6 +95,7 @@
 <script>
 const ADMIN_EMAIL = "boylouco512@gmail.com";
 
+// Atualiza saldo manualmente
 async function atualizarSaldo() {
   const email = document.getElementById("email").value.trim();
   const valor = parseFloat(document.getElementById("valor").value);
@@ -125,6 +126,7 @@ async function atualizarSaldo() {
   }
 }
 
+// Lista usuários
 async function carregarUsuarios() {
   const tabela = document.getElementById('tabelaUsuarios');
   tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
@@ -138,6 +140,7 @@ async function carregarUsuarios() {
   });
 }
 
+// Lista saques
 async function carregarSaques() {
   const tabela = document.getElementById('tabela-saques');
   tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
@@ -150,22 +153,31 @@ async function carregarSaques() {
       <td>${saq.email}</td>
       <td>${saq.valor}</td>
       <td>${saq.status}</td>
-      <td>${saq.status === 'pendente' ? `<button onclick="aprovarSaque('${saq.id}')">Aprovar</button>` : ''}</td>
+      <td>${saq.status === 'pendente' ? `<button type="button" onclick="aprovarSaque('${saq.id}')">Aprovar</button>` : ''}</td>
     `;
     tabela.appendChild(tr);
   });
 }
 
+// Aprova saque
 async function aprovarSaque(id) {
-  await fetch('/.netlify/functions/ColeSaque', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id })
-  });
-  carregarSaques();
-  carregarUsuarios();
+  try {
+    const res = await fetch('/.netlify/functions/ColeSaque', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (!res.ok) throw new Error('Erro ao aprovar saque');
+    await carregarSaques();
+    await carregarUsuarios();
+    alert('Saque aprovado com sucesso!');
+  } catch (err) {
+    console.error(err);
+    alert('Erro: ' + err.message);
+  }
 }
 
+// Lista depósitos
 async function carregarDepositos() {
   const tabela = document.getElementById('tabela-depositos');
   tabela.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
@@ -179,35 +191,47 @@ async function carregarDepositos() {
       <td>${dep.valor}</td>
       <td>${dep.status}</td>
       <td>${dep.rede || '-'}</td>
-      <td>${dep.status === 'pendente' ? `<button onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` : ''}</td>
+      <td>${dep.status === 'pendente' ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` : ''}</td>
     `;
     tabela.appendChild(tr);
   });
 }
 
+// Aprova depósito
 async function aprovarDeposito(id) {
-  await fetch('/.netlify/functions/OrganizaDeposito', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id })
-  });
-  carregarDepositos();
-  carregarUsuarios();
+  try {
+    const res = await fetch('/.netlify/functions/OrganizaDeposito', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    if (!res.ok) throw new Error('Erro ao aprovar depósito');
+    await carregarDepositos();
+    await carregarUsuarios();
+    alert('Depósito aprovado com sucesso!');
+  } catch (err) {
+    console.error(err);
+    alert('Erro: ' + err.message);
+  }
 }
 
+// Carregar tudo
 function carregarTudo() {
   carregarUsuarios();
   carregarSaques();
   carregarDepositos();
 }
 
+// Login com verificação de email
 netlifyIdentity.on('login', user => {
-  if (user.email === ADMIN_EMAIL) {
+  const email = user.email || (user.user_metadata && user.user_metadata.email);
+  if (email === ADMIN_EMAIL) {
     document.getElementById('loginContainer').style.display = 'none';
     document.getElementById('painel').style.display = 'flex';
     carregarTudo();
   } else {
     alert('Acesso negado!');
+    netlifyIdentity.logout();
   }
 });
 </script>
