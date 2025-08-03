@@ -11,19 +11,19 @@ exports.handler = async (event) => {
 
     await client.connect();
 
-    // Busca o depósito pelo id
-    const deposito = await client.query('SELECT email, valor FROM depositos WHERE id=$1', [id]);
-    if (deposito.rows.length === 0) {
+    // Buscar o depósito
+    const dep = await client.query('SELECT email, valor FROM depositos WHERE id=$1', [id]);
+    if (dep.rows.length === 0) {
       await client.end();
       return { statusCode: 404, body: 'Depósito não encontrado' };
     }
 
-    const { email, valor } = deposito.rows[0];
+    const { email, valor } = dep.rows[0];
 
-    // Aprova depósito
+    // Aprovar
     await client.query('UPDATE depositos SET status=$1 WHERE id=$2', ['aprovado', id]);
 
-    // Aumenta saldo
+    // Creditar saldo do usuário
     await client.query('UPDATE usuarios SET saldo = saldo + $1 WHERE email=$2', [valor, email]);
 
     await client.end();
