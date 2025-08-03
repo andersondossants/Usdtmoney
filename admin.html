@@ -80,9 +80,16 @@
     <div id="pedidos">
       <h2>Pedidos de Depósito</h2>
       <table>
-        <thead><tr><th>Email</th><th>Valor</th><th>Status</th><th>Rede</th><th>Ação</th></tr></thead>
-        <tbody id="tabela-depositos"><tr><td colspan="5">Carregando...</td></tr></tbody>
-      </table>
+        <thead>
+<tr>
+  <th>Email</th>
+  <th>Valor</th>
+  <th>Status</th>
+  <th>Rede</th>
+  <th>Comprovativo</th>
+  <th>Ação</th>
+</tr>
+        </thead>
 
       <h2>Pedidos de Saque</h2>
       <table>
@@ -180,25 +187,33 @@ async function aprovarSaque(id) {
 // Lista depósitos
 async function carregarDepositos() {
   const tabela = document.getElementById('tabela-depositos');
-  tabela.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+  tabela.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
+  
   const res = await fetch('/.netlify/functions/getDepositos');
   const data = await res.json();
   tabela.innerHTML = '';
+
   data.forEach(dep => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-  <td>${dep.email}</td>
-  <td>${dep.valor}</td>
-  <td>${dep.status}</td>
-  <td>${dep.rede || '-'}</td>
-  <td>
-    ${dep.status === 'pendente' ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` : ''}
-    ${dep.comprovativo ? `<a href="${dep.comprovativo}" target="_blank">Ver Comprovativo</a>` : ''}
-  </td>
-`;
+      <td>${dep.email}</td>
+      <td>${dep.valor}</td>
+      <td>${dep.status}</td>
+      <td>${dep.rede || '-'}</td>
+      <td>
+        ${dep.comprovativo 
+          ? `<a href="${dep.comprovativo}" target="_blank">Ver</a>` 
+          : 'Nenhum'}
+      </td>
+      <td>
+        ${dep.status === 'pendente' 
+          ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` 
+          : ''}
+      </td>
+    `;
     tabela.appendChild(tr);
   });
-}
+                          }
 
 // Aprova depósito (corrigido para aprovarDeposito.js)
 async function aprovarDeposito(id) {
