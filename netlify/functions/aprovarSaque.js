@@ -27,20 +27,23 @@ export async function handler(event) {
 
     const { email, valor } = result.rows[0];
 
-    // 2. Atualizar o status para aprovado
+    // 2. Atualizar status do saque
     await client.query(
       "UPDATE saques SET status = 'aprovado' WHERE id = $1",
       [id]
     );
 
-    // Aqui você poderia atualizar o saldo do usuário se fosse necessário
-    // await client.query("UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2", [valor, email]);
+    // 3. Subtrair saldo do usuário
+    await client.query(
+      "UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2",
+      [valor, email]
+    );
 
     await client.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: 'Saque aprovado com sucesso' }),
+      body: JSON.stringify({ message: 'Saque aprovado e saldo atualizado' }),
     };
   } catch (error) {
     console.error('Erro ao aprovar saque:', error);
@@ -49,4 +52,4 @@ export async function handler(event) {
       body: JSON.stringify({ error: 'Erro interno ao aprovar saque' }),
     };
   }
-  }
+        }
