@@ -234,21 +234,16 @@
       <option>TRC20</option>
     </select>
 
-    <button onclick="confirmarSaque()">Confirmar Saque</button>
-    <div class="close-btn" onclick="fecharModal()">Fechar</div>
-  </div>
-</div>
-
-  <!-- Modal Depósito -->
+<!-- Modal Depósito -->
 <div id="modalDeposito">
   <div class="modal-content">
     <h3>Depósito Manual</h3>
 
     <div class="form-box">
-  <label>Valor para depósito (USDT)</label>
-  <input type="number" id="valorDeposito" placeholder="Ex: 10">
-
+      <label>Valor para depósito (USDT)</label>
+      <input type="number" id="valorDeposito" placeholder="Ex: 10">
     </div>
+
     <label for="redeDeposito">Rede</label>
     <select id="redeDeposito" onchange="atualizarEndereco()">
       <option value="BEP20">BEP20 (Binance Smart Chain)</option>
@@ -259,7 +254,7 @@
     <label for="enderecoDeposito">Endereço para depósito</label>
     <input type="text" id="enderecoDeposito" readonly />
 
-    <label for="comprovativo">Comprovativo</label>
+    <label for="comprovativo">Comprovativo (imagem ou PDF)</label>
     <input type="file" id="comprovativo" accept=".jpg,.jpeg,.png,.pdf" />
 
     <button onclick="solicitarDeposito()">Enviar Depósito</button>
@@ -267,19 +262,46 @@
   </div>
 </div>
 
-  <div id="painelComissao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center;">
-    <div style="background:#1f2937; padding:20px; border-radius:15px; max-width:400px; width:90%; color:white;">
-      <h3>Comissões</h3>
-      <p>Link de convite:</p>
-      <input type="text" id="linkConvite" style="width:100%" readonly>
-      <p>Indicados:</p>
-      <ul id="listaIndicados"></ul>
-      <p>Total comissão: <span id="comissao-total2">0</span> USDT</p>
-      <button onclick="fecharComissao()">Fechar</button>
-    </div>
-  </div>
+<script>
+async function solicitarDeposito() {
+  const valor = document.getElementById('valorDeposito').value;
+  const rede = document.getElementById('redeDeposito').value;
+  const fileInput = document.getElementById('comprovativo');
+  const file = fileInput.files[0];
 
-  <script>
+  if (!valor || !file) {
+    alert('Informe o valor e selecione um comprovativo.');
+    return;
+  }
+
+  // Converter o arquivo para Base64
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const comprovativoBase64 = reader.result;
+
+    try {
+      await fetch('/.netlify/functions/novoDeposito', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          valor,
+          rede,
+          comprovativo: comprovativoBase64
+        })
+      });
+
+      alert('Depósito enviado com sucesso! Aguarde a aprovação.');
+      fecharDeposito();
+    } catch (error) {
+      console.error(error);
+      alert('Erro ao enviar depósito');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+    <script>
+    
     let saldo = 3.00;
 let rendimento = 0; // lucro diário total
 let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms)
