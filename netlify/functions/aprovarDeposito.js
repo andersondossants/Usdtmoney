@@ -20,7 +20,7 @@ export async function handler(event) {
 
     // Buscar o depósito pelo id
     const result = await client.query(
-      'SELECT email, valentia FROM depositos WHERE id = $1',
+      'SELECT email, valor FROM depositos WHERE id = $1',
       [id]
     );
 
@@ -32,7 +32,7 @@ export async function handler(event) {
       };
     }
 
-    const { email, valentia } = result.rows[0];
+    const { email, valor } = result.rows[0];
 
     // Atualizar status do depósito
     await client.query(
@@ -40,10 +40,10 @@ export async function handler(event) {
       [id]
     );
 
-    // Somar saldo do usuário
+    // Somar o saldo do usuário
     await client.query(
       'UPDATE usuarios SET saldo = saldo + $1 WHERE LOWER(email) = LOWER($2)',
-      [valentia, email]
+      [valor, email]
     );
 
     await client.end();
@@ -59,4 +59,4 @@ export async function handler(event) {
       body: JSON.stringify({ error: 'Erro interno ao aprovar depósito' }),
     };
   }
-}
+  }
