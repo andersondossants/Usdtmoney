@@ -1,35 +1,55 @@
 const { Client } = require('pg');
 
 exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: "Method not allowed" };
+  }
+
   try {
     const { id } = JSON.parse(event.body);
 
     const client = new Client({
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: false } // Necessário no Neon
     });
 
     await client.connect();
 
-    // Buscar o saque
-    const saque = await client.query('SELECT email, valor FROM saques WHERE id=$1', [id]);
+    // Pega dados do saque
+    const saque = await client.query(
+      'SELECT email, valor, status FROM saques WHERE id = $1',
+      [id]
+    );
+
     if (saque.rows.length === 0) {
       await client.end();
-      return { statusCode: 404, body: 'Saque não encontrado' };
+      return { statusCode: 404, body: JSON.stringify({ error: "Saque não encontrado" }) };
     }
 
-    const { email, valor } = saque.rows[0];
+    const { email, valor, status } = saque.rows[0];
+    if (status !== 'pendente') {
+      await client.end();
+      return { statusCode: 400, body: JSON.stringify({ error: "Saque já processado" }) };
+    }
 
-    // Aprovar
-    await client.query('UPDATE saques SET status=$1 WHERE id=$2', ['aprovado', id]);
+    // Atualiza status do saque
+    await client.query(
+      'UPDATE saques SET status = $1 WHERE id = $2',
+      ['aprovado', id]
+    );
 
-    // Debitar do usuário
-    await client.query('UPDATE usuarios SET saldo = saldo - $1 WHERE email=$2', [valor, email]);
+    // Subtrai do saldo do usuário
+    await client.query(
+      'UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2',
+      [valor, email]
+    );
 
     await client.end();
+
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
+
   } catch (err) {
-    console.error('Erro ao aprovar saque:', err);
-    return { statusCode: 500, body: 'Erro ao aprovar saque' };
+    console.error("Erro ao aprovar saque:", err);
+    return { statusCode: 500, body: JSON.stringify({ error: "Erro interno no servidor" }) };
   }
 };
