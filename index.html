@@ -233,6 +233,10 @@
       <option>BEP20</option>
       <option>TRC20</option>
     </select>
+    <button onclick="confirmarSaque()">Confirmar Saque</button>
+    <div class="close-btn" onclick="fecharModal()">Fechar</div>
+  </div>
+  </div>
 
 <!-- Modal Depósito -->
 <div id="modalDeposito">
@@ -262,46 +266,7 @@
   </div>
 </div>
 
-<script>
-async function solicitarDeposito() {
-  const valor = document.getElementById('valorDeposito').value;
-  const rede = document.getElementById('redeDeposito').value;
-  const fileInput = document.getElementById('comprovativo');
-  const file = fileInput.files[0];
-
-  if (!valor || !file) {
-    alert('Informe o valor e selecione um comprovativo.');
-    return;
-  }
-
-  // Converter o arquivo para Base64
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const comprovativoBase64 = reader.result;
-
-    try {
-      await fetch('/.netlify/functions/novoDeposito', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          valor,
-          rede,
-          comprovativo: comprovativoBase64
-        })
-      });
-
-      alert('Depósito enviado com sucesso! Aguarde a aprovação.');
-      fecharDeposito();
-    } catch (error) {
-      console.error(error);
-      alert('Erro ao enviar depósito');
-    }
-  };
-  reader.readAsDataURL(file);
-}
-</script>
     <script>
-    
     let saldo = 3.00;
 let rendimento = 0; // lucro diário total
 let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms)
