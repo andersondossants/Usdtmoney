@@ -446,34 +446,56 @@ function atualizarEndereco() {
   </script>
 // Função para envio do depósito
 <script>
-function solicitarDeposito() {
+async function solicitarDeposito() {
   const valor = parseFloat(document.getElementById("valorDeposito").value);
   const rede = document.getElementById("redeDeposito").value;
+  const file = document.getElementById("comprovativo").files[0];
+
+  if (!valor || !rede || !file) {
+    alert("Preencha todos os campos e selecione um comprovativo.");
+    return;
+  }
 
   if (valor < 5) {
     alert("Depósito mínimo é 5 USDT");
     return;
   }
 
-  fetch('/.netlify/functions/solicitarDeposito', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: netlifyIdentity.currentUser()?.email,
-      valor,
-      rede
-    })
-  })
-  .then(res => res.json())
-  .then(() => {
-    alert("Pedido de depósito enviado. Aguarde aprovação.");
-    fecharDeposito();
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Erro ao enviar pedido de depósito.");
+  // Converter o arquivo em Base64
+  const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
   });
+
+  const comprovativoBase64 = await toBase64(file);
+
+  const user = netlifyIdentity.currentUser();
+  const email = user?.email;
+
+  try {
+    const res = await fetch('/.netlify/functions/novoDeposito', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        valor,
+        rede,
+        comprovativo: comprovativoBase64
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao enviar depósito");
+
+    alert("Depósito enviado com sucesso! Aguarde aprovação.");
+    fecharDeposito();
+  } catch (err) {
+    console.error(err);
+    alert("Erro: " + err.message);
   }
+}
 </script>
 </body>
 </html>
