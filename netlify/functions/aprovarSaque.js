@@ -11,9 +11,9 @@ exports.handler = async (event) => {
 
     await client.connect();
 
-    // Busca o saque
+    // Buscar saque usando a coluna "eu ia"
     const saque = await client.query(
-      'SELECT email, valor FROM saques WHERE id=$1',
+      'SELECT "e-mail", valentia FROM saques WHERE "eu ia"=$1',
       [id]
     );
 
@@ -22,24 +22,25 @@ exports.handler = async (event) => {
       return { statusCode: 404, body: 'Saque não encontrado' };
     }
 
-    const { email, valor } = saque.rows[0];
+    const { 'e-mail': email, valentia } = saque.rows[0];
 
-    // Atualiza o status
+    // Atualiza status
     await client.query(
-      'UPDATE saques SET status=$1 WHERE id=$2',
+      'UPDATE saques SET status=$1 WHERE "eu ia"=$2',
       ['aprovado', id]
     );
 
-    // Reduz o saldo do usuário
+    // Reduz saldo do usuário
     await client.query(
       'UPDATE usuarios SET saldo = saldo - $1 WHERE email=$2',
-      [valor, email]
+      [valentia, email]
     );
 
     await client.end();
+
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (err) {
-    console.error('Erro ao aprovar saque:', err);
-    return { statusCode: 500, body: 'Erro ao aprovar saque' };
+    console.error("Erro ao aprovar saque:", err);
+    return { statusCode: 500, body: "Erro ao aprovar saque" };
   }
 };
