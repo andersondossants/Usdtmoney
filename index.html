@@ -165,6 +165,7 @@
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+    
   </style>
 </head>
 <body>
@@ -240,6 +241,32 @@
     <div class="close-btn" onclick="fecharModal()">Fechar</div>
   </div>
   </div>
+
+  <!-- Painel de Comissão -->
+<div id="painelComissao" style="
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;">
+  
+  <div style="background:#1e293b;padding:20px;border-radius:15px;width:90%;max-width:400px;color:white;">
+    <h3>Comissão e Indicações</h3>
+    
+    <label>Seu link de convite</label>
+    <input type="text" id="linkConvite" readonly style="width:100%;padding:10px;margin-bottom:10px;background:#0f172a;color:white;border:none;border-radius:8px;">
+    
+    <h4>Indicações:</h4>
+    <ul id="listaIndicados" style="padding-left:20px;"></ul>
+    
+    <p>Total de Comissão: <span id="comissao-total2">0</span> USDT</p>
+    
+    <button onclick="fecharComissao()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:10px;color:white;">Fechar</button>
+  </div>
+</div>
 
 <!-- Modal Depósito -->
 <div id="modalDeposito">
@@ -366,7 +393,12 @@ setInterval(() => {
       document.getElementById("comissao-total2").innerText=comissao.toFixed(2);
     }
     function fecharComissao(){document.getElementById("painelComissao").style.display="none";}
-
+// Captura ?ref= do link
+let referencia = null;
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('ref')) {
+  referencia = urlParams.get('ref');
+      }
     netlifyIdentity.on('login', user=>{
   document.querySelector('.container').style.display='none';
   document.getElementById('mainDashboard').style.display='block';
@@ -375,7 +407,18 @@ setInterval(() => {
                 ? user.user_metadata.full_name 
                 : user.email.split('@')[0];
   document.getElementById('userNome').innerText = "Bem-vindo, " + nome;
-
+// Salva referência de convite, se existir
+  if (referencia) {
+    fetch('/.netlify/functions/salvarReferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        convidado: user.email,
+        convidou: referencia
+      })
+    }).catch(err => console.error("Erro ao salvar referência:", err));
+      }
+      
   // Buscar saldo real do banco Neon
   fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
     .then(res => res.json())
