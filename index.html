@@ -320,11 +320,23 @@ function investir(valor, lucroDiario) {
     atualizarSaldo();
     alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
 
-    // Atualiza comissão se tiver indicados
-    if (indicados.length > 0) {
-      comissao += valor * 0.30;
-      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
-    }
+    // Envia comissão para o referenciador, se houver
+if (referencia) {
+  fetch('/.netlify/functions/adicionarComissao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      referenciador: referencia,
+      valorComissao: valor * 0.30
+    })
+  })
+  .then(() => {
+    console.log("Comissão enviada para o referenciador com sucesso");
+  })
+  .catch(err => {
+    console.error("Erro ao enviar comissão para o referenciador:", err);
+  });
+      }
 
     // --- NOVO: Atualiza saldo no backend (Netlify Function) ---
     fetch('/.netlify/functions/updateSaldo', {
