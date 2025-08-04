@@ -397,6 +397,11 @@ setInterval(() => {
     alert("Erro ao enviar pedido de saque.");
   });
     } 
+      let referencia = null;
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('ref')) {
+  referencia = urlParams.get('ref');
+      }
 
     netlifyIdentity.on('login', user => {
   document.querySelector('.container').style.display = 'none';
