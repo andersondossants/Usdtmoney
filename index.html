@@ -419,58 +419,48 @@ setInterval(() => {
     function fecharComissao(){document.getElementById("painelComissao").style.display="none";}
 
       function sacarComissao() {
-  const valor = parseFloat(prompt("Digite o valor que deseja sacar da comissão:"));
+  const valor = parseFloat(prompt("Digite o valor que deseja transferir da comissão para o saldo:"));
 
   if (!valor || isNaN(valor)) {
-    alert("Valor inválido");
+    alert("Valor inválido.");
     return;
   }
 
   if (valor < 5) {
-    alert("Saque mínimo da comissão é 5 USDT");
+    alert("Saque mínimo da comissão é 5 USDT.");
     return;
   }
 
   if (valor > comissao) {
-    alert("Comissão insuficiente");
+    alert("Você não tem comissão suficiente.");
     return;
   }
 
-  const carteira = prompt("Informe o endereço da sua carteira:");
-  const rede = prompt("Informe a rede (BEP20 ou TRC20):");
+  const email = netlifyIdentity.currentUser()?.email;
 
-  if (!carteira || !rede) {
-    alert("Carteira ou rede não informada");
-    return;
-  }
-
-  // Envia requisição para sacar comissão
   fetch('/.netlify/functions/sacarComissao', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: netlifyIdentity.currentUser()?.email,
-      valor,
-      carteira,
-      rede
-    })
+    body: JSON.stringify({ email, valor })
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.sucesso) {
-      alert("Pedido de saque da comissão enviado com sucesso!");
-      comissao -= valor;
-      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
-      document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
-    } else {
-      alert("Erro: " + data.error);
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Erro ao processar saque da comissão.");
-  });
+    .then(res => res.json())
+    .then(data => {
+      if (data.sucesso) {
+        alert("Transferido para seu saldo!");
+        comissao = data.novaComissao;
+        saldo = data.novoSaldo;
+        document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+        document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+        document.getElementById("saldo").innerText = saldo.toFixed(2);
+      } else {
+        alert("Erro: " + data.erro);
       }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao processar saque da comissão.");
+    });
+}
       
       // Captura ?ref= do link
 let referencia = null;
@@ -550,8 +540,8 @@ function atualizarEndereco() {
   }
 }
   </script>
-// Função para envio do depósito
-<script>
+     
+<script> // Função para envio do depósito
 async function solicitarDeposito() {
   const valor = parseFloat(document.getElementById("valorDeposito").value);
   const rede = document.getElementById("redeDeposito").value;
