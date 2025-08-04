@@ -1,42 +1,69 @@
-const { Pool } = require('@neondatabase/serverless');
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const { Client } = require('pg');
 
 exports.handler = async (event) => {
   try {
     const { email, valor } = JSON.parse(event.body);
 
-    const { rows } = await pool.query('SELECT comissao, saldo FROM usuarios WHERE email = $1', [email]);
-    if (rows.length === 0) {
-      return { statusCode: 404, body: JSON.stringify({ error: 'Usuário não encontrado' }) };
+    if (!email || !valor) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ erro: "Dados incompletos." }),
+      };
     }
 
-    const comissaoAtual = parseFloat(rows[0].comissao);
-    const saldoAtual = parseFloat(rows[0].saldo);
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL, // variável de ambiente do Neon
+      ssl: { rejectUnauthorized: false },
+    });
 
-    if (valor > comissaoAtual) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Comissão insuficiente' }) };
-    }
+    await client.connect();
 
-    const novaComissao = comissaoAtual - valor;
-    const novoSaldo = saldoAtual + valor;
-
-    await pool.query('UPDATE usuarios SET comissao = $1, saldo = $2 WHERE email = $3', [novaComissao, novoSaldo, email]);
-
-    // Registra como saque de comissão concluído
-    await pool.query(
-      'INSERT INTO saques (email, valor, tipo, status, data) VALUES ($1, $2, $3, $4, NOW())',
-      [email, valor, 'comissao', 'concluido']
+    // 1. Buscar comissão e saldo atual do usuário
+    const res = await client.query(
+      "SELECT saldo, comissao FROM usuarios WHERE email = $1",
+      [email]
     );
+
+    if (res.rows.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ erro: "Usuário não encontrado." }),
+      };
+    }
+
+    const { saldo, comissao } = res.rows[0];
+
+    if (valor > comissao) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ erro: "Comissão insuficiente." }),
+      };
+    }
+
+    const novoSaldo = parseFloat(saldo) + parseFloat(valor);
+    const novaComissao = parseFloat(comissao) - parseFloat(valor);
+
+    // 2. Atualizar valores no banco
+    await client.query(
+      "UPDATE usuarios SET saldo = $1, comissao = $2 WHERE email = $3",
+      [novoSaldo, novaComissao, email]
+    );
+
+    await client.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ sucesso: true }),
+      body: JSON.stringify({
+        sucesso: true,
+        novoSaldo,
+        novaComissao,
+      }),
     };
-  } catch (error) {
-    console.error('Erro ao sacar comissão:', error);
+  } catch (err) {
+    console.error("Erro:", err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Erro interno ao processar saque de comissão' }),
+      body: JSON.stringify({ erro: "Erro interno no servidor." }),
     };
   }
 };
