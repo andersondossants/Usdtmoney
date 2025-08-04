@@ -434,13 +434,22 @@ if (urlParams.has('ref')) {
                 ? user.user_metadata.full_name 
                 : user.email.split('@')[0];
   document.getElementById('userNome').innerText = "Bem-vindo, " + nome;
+
 // Salva referência de convite, se existir
-  if (referencia) {
-    fetch('/.netlify/functions/salvarReferencia', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        convidado: user.emailfunction sacarComissao() {
+if (referencia) {
+  fetch('/.netlify/functions/salvarReferencia', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      convidado: user.email,
+      convidou: referencia
+    })
+  })
+  .catch(err => console.error("Erro ao salvar referência:", err));
+}
+
+// Função para sacar comissão (transferir para saldo)
+function sacarComissao() {
   const valor = parseFloat(prompt("Digite o valor que deseja transferir da comissão para o saldo:"));
 
   if (!valor || isNaN(valor)) {
@@ -448,8 +457,8 @@ if (urlParams.has('ref')) {
     return;
   }
 
-  if (valor < 1) {
-    alert("Saque mínimo da comissão é 1 USDT");
+  if (valor < 5) {
+    alert("Saque mínimo da comissão é 5 USDT");
     return;
   }
 
@@ -458,7 +467,6 @@ if (urlParams.has('ref')) {
     return;
   }
 
-  // Envia requisição para sacar comissão (transferir para saldo)
   fetch('/.netlify/functions/sacarComissao', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -484,11 +492,17 @@ if (urlParams.has('ref')) {
     console.error(err);
     alert("Erro ao processar saque da comissão.");
   });
-      },
-        convidou: referencia
-      })
-    }).catch(err => console.error("Erro ao salvar referência:", err));
-      }
+    }
+      fetch('/.netlify/functions/salvarReferencia', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    convidado: user.email,
+    convidou: referencia
+  })
+})
+.catch(err => console.error("Erro ao salvar referência:", err));
+      
       // Registrar usuário no banco
 fetch('/.netlify/functions/registrarUsuario', {
   method: 'POST',
