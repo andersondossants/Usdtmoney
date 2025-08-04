@@ -263,7 +263,7 @@
     <ul id="listaIndicados" style="padding-left:20px;"></ul>
     
     <p>Total de Comissão: <span id="comissao-total2">0</span> USDT</p>
-    
+    <button onclick="sacarComissao()" style="width:100%;padding:10px;background:#22d3ee;border:none;border-radius:10px;color:white;margin-top:10px;">Sacar Comissão</button>
     <button onclick="fecharComissao()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:10px;color:white;">Fechar</button>
   </div>
 </div>
@@ -327,7 +327,7 @@ if (referencia) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       referenciador: referencia,
-      valorComissao: valor * 0.30
+      valorComissao: valor * 0.10
     })
   })
   .then(() => {
@@ -417,7 +417,62 @@ setInterval(() => {
   document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
       }
     function fecharComissao(){document.getElementById("painelComissao").style.display="none";}
-// Captura ?ref= do link
+
+      function sacarComissao() {
+  const valor = parseFloat(prompt("Digite o valor que deseja sacar da comissão:"));
+
+  if (!valor || isNaN(valor)) {
+    alert("Valor inválido");
+    return;
+  }
+
+  if (valor < 5) {
+    alert("Saque mínimo da comissão é 5 USDT");
+    return;
+  }
+
+  if (valor > comissao) {
+    alert("Comissão insuficiente");
+    return;
+  }
+
+  const carteira = prompt("Informe o endereço da sua carteira:");
+  const rede = prompt("Informe a rede (BEP20 ou TRC20):");
+
+  if (!carteira || !rede) {
+    alert("Carteira ou rede não informada");
+    return;
+  }
+
+  // Envia requisição para sacar comissão
+  fetch('/.netlify/functions/sacarComissao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: netlifyIdentity.currentUser()?.email,
+      valor,
+      carteira,
+      rede
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.sucesso) {
+      alert("Pedido de saque da comissão enviado com sucesso!");
+      comissao -= valor;
+      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+      document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+    } else {
+      alert("Erro: " + data.error);
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao processar saque da comissão.");
+  });
+      }
+      
+      // Captura ?ref= do link
 let referencia = null;
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('ref')) {
