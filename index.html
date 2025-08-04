@@ -448,6 +448,17 @@ fetch('/.netlify/functions/registrarUsuario', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ email: user.email })
 });
+      // Buscar comissão real do banco Neon
+fetch(`/.netlify/functions/getComissao?email=${user.email}`)
+  .then(res => res.json())
+  .then(data => {
+    if (data.comissao !== undefined) {
+      comissao = parseFloat(data.comissao);
+      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+      document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+    }
+  })
+  .catch(err => console.error("Erro ao buscar comissão:", err));
   // Buscar saldo real do banco Neon
   fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
     .then(res => res.json())
