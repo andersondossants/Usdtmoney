@@ -1,39 +1,39 @@
-const { neon } = require("@neondatabase/serverless");
-const sql = neon(process.env.DATABASE_URL);
+const { sql } = require('@neondatabase/serverless');
 
 exports.handler = async (event) => {
-  const { email, valor, carteira, rede } = JSON.parse(event.body || '{}');
-
-  if (!email || !valor || !carteira || !rede) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: "Dados incompletos" })
-    };
-  }
-
   try {
-    const result = await sql`
-      SELECT comissao FROM usuarios WHERE email = ${email};
-    `;
+    const { email, valor, carteira, rede } = JSON.parse(event.body);
 
-    const comissaoAtual = parseFloat(result[0]?.comissao || 0);
-
-    if (comissaoAtual < valor) {
+    if (!email || !valor || !carteira || !rede) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Comissão insuficiente" })
+        body: JSON.stringify({ error: 'Dados incompletos' })
       };
     }
 
-    // Subtrai comissão
-    await sql`
-      UPDATE usuarios SET comissao = comissao - ${valor} WHERE email = ${email};
-    `;
+    // Busca comissão atual
+    const { rows } = await sql`SELECT comissao FROM usuarios WHERE email = ${email}`;
+    if (rows.length === 0) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Usuário não encontrado' })
+      };
+    }
 
-    // Registra o saque
+    const comissaoAtual = parseFloat(rows[0].comissao);
+    if (valor > comissaoAtual) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Comissão insuficiente' })
+      };
+    }
+
+    // Atualiza: Subtrai comissão, adiciona no saldo
     await sql`
-      INSERT INTO saques_comissao (email, valor, carteira, rede, status)
-      VALUES (${email}, ${valor}, ${carteira}, ${rede}, 'pendente');
+      UPDATE usuarios 
+      SET comissao = comissao - ${valor},
+          saldo = saldo + ${valor}
+      WHERE email = ${email}
     `;
 
     return {
@@ -41,11 +41,11 @@ exports.handler = async (event) => {
       body: JSON.stringify({ sucesso: true })
     };
 
-  } catch (error) {
-    console.error("Erro ao sacar comissão:", error);
+  } catch (err) {
+    console.error(err);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Erro ao processar o saque" })
+      body: JSON.stringify({ error: 'Erro ao processar saque da comissão' })
     };
   }
 };
