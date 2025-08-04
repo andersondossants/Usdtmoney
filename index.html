@@ -396,46 +396,19 @@ setInterval(() => {
     console.error(err);
     alert("Erro ao enviar pedido de saque.");
   });
-    }
+    } 
 
-    function abrirComissao() {
-  const painel = document.getElementById("painelComissao");
-  painel.style.display = "flex";
-
-  // Pega email do usuário logado no Netlify Identity
-  const emailUsuario = netlifyIdentity.currentUser()?.email || "";
-
-  // Gera link de convite dinâmico
-  document.getElementById("linkConvite").value =
-    window.location.origin + "?ref=" + encodeURIComponent(emailUsuario);
-
-  // Atualiza lista de indicados
-  document.getElementById("listaIndicados").innerHTML =
-    indicados.map(i => "<li>" + i + "</li>").join("");
-
-  // Atualiza total de comissão
-  document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
-      }
-    function fecharComissao(){document.getElementById("painelComissao").style.display="none";}
-
-      
-      
-      // Captura ?ref= do link
-let referencia = null;
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.has('ref')) {
-  referencia = urlParams.get('ref');
-      }
     netlifyIdentity.on('login', user => {
   document.querySelector('.container').style.display = 'none';
   document.getElementById('mainDashboard').style.display = 'block';
 
-  const nome = user.user_metadata && user.user_metadata.full_name 
-                ? user.user_metadata.full_name 
-                : user.email.split('@')[0];
+  const nome = user.user_metadata && user.user_metadata.full_name
+    ? user.user_metadata.full_name
+    : user.email.split('@')[0];
+
   document.getElementById('userNome').innerText = "Bem-vindo, " + nome;
 
-  // ✅ Salva referência de convite, se existir
+  // Captura ?ref= da URL e salva no banco se for primeiro acesso
   if (referencia) {
     fetch('/.netlify/functions/salvarReferencia', {
       method: 'POST',
@@ -444,13 +417,60 @@ if (urlParams.has('ref')) {
         convidado: user.email,
         convidou: referencia
       })
-    })
-    .catch(err => console.error("Erro ao salvar referência:", err));
+    }).catch(err => console.error("Erro ao salvar referência:", err));
   }
 
-  // ... (aqui continua o restante do código do login)
+  // Registra o usuário no banco
+  fetch('/.netlify/functions/registrarUsuario', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: user.email })
+  });
+
+  // Busca comissão real do banco
+  fetch(`/.netlify/functions/getComissao?email=${user.email}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.comissao !== undefined) {
+        comissao = parseFloat(data.comissao);
+        document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+        document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+      }
+    })
+    .catch(err => console.error("Erro ao buscar comissão:", err));
+
+  // Busca saldo real do banco
+  fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.saldo !== undefined) {
+        saldo = parseFloat(data.saldo);
+        atualizarSaldo();
+      } else {
+        alert("Não foi possível buscar o saldo.");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao buscar saldo.");
+    });
 });
-// ✅ Função para sacar comissão (transferir para saldo)
+
+function abrirComissao() {
+  const painel = document.getElementById("painelComissao");
+  painel.style.display = "flex";
+
+  const emailUsuario = netlifyIdentity.currentUser()?.email || "";
+
+  document.getElementById("linkConvite").value =
+    window.location.origin + "?ref=" + encodeURIComponent(emailUsuario);
+
+  document.getElementById("listaIndicados").innerHTML =
+    indicados.map(i => "<li>" + i + "</li>").join("");
+
+  document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+}
+
 function sacarComissao() {
   const valor = parseFloat(prompt("Digite o valor que deseja transferir da comissão para o saldo:"));
 
@@ -489,42 +509,12 @@ function sacarComissao() {
     } else {
       alert("Erro: " + data.error);
     }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Erro ao processar saque da comissão.");
   });
       }
 
+
       
-      // Registrar usuário no banco
-fetch('/.netlify/functions/registrarUsuario', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ email: user.email })
-});
-      // Buscar comissão real do banco Neon
-fetch(`/.netlify/functions/getComissao?email=${user.email}`)
-  .then(res => res.json())
-  .then(data => {
-    if (data.comissao !== undefined) {
-      comissao = parseFloat(data.comissao);
-      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
-      document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
-    }
-  })
-  .catch(err => console.error("Erro ao buscar comissão:", err));
-  // Buscar saldo real do banco Neon
-  fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
-    .then(res => res.json())
-    .then(data => {
-        if (data.saldo !== undefined) {
-          saldo = parseFloat(data.saldo);
-          atualizarSaldo();
-        } else {
-          alert("Não foi possível buscar o saldo.");
-        }
-    })
+  
     .catch(err => {
         console.error(err);
         alert("Erro ao buscar saldo.");
