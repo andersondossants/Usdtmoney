@@ -1,1 +1,607 @@
-<!DOCTYPE html> <html lang="pt"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1" /> <title>Netlify Money – O sucesso do investimento</title> <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script> <style> * { box-sizing: border-box; } body { margin: 0; font-family: 'Segoe UI', sans-serif; background: linear-gradient(145deg, #0f172a, #1e293b); color: white; } .container { width: 100%; height: 100vh; display: flex; justify-content: center; align-items: center; } #authContainer { width: 90%; max-width: 400px; background: #1f2937; padding: 30px; border-radius: 20px; box-shadow: 0 0 30px #0ea5e9; } #authContainer h2 { text-align: center; margin-bottom: 20px; color: #0ea5e9; } button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 10px; background: #0ea5e9; color: white; font-size: 16px; cursor: pointer; } #mainDashboard { display: none; } header { background: #0f172a; padding: 20px; text-align: center; box-shadow: 0 0 15px #0ea5e9; } header h1 { margin: 0; font-size: 2em; color: #22d3ee; } header p { margin-top: 5px; font-size: 1.1em; color: #a1a1aa; } .barra-saldo { background: #1e3a8a; padding: 15px; display: flex; justify-content: space-around; align-items: center; color: #fff; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.3); } .dropdown { position: relative; display: inline-block; } .dropdown-content { display: none; position: absolute; background-color: #1e293b; min-width: 140px; right: 0; top: 45px; z-index: 1; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.4); } .dropdown-content button { width: 100%; padding: 10px; text-align: left; background: none; border: none; color: white; cursor: pointer; font-size: 0.95em; } .dropdown-content button:hover { background-color: #0ea5e9; } .dropdown:hover .dropdown-content { display: block; } .saldo-btn { background: #0ea5e9; padding: 10px 20px; border-radius: 30px; font-size: 0.95em; box-shadow: 0 0 10px rgba(14,165,233,0.5); color: #fff; font-weight: bold; border: none; cursor: pointer; } nav { display: flex; justify-content: center; gap: 15px; margin: 20px 0; } nav a { padding: 10px 15px; background: #1e293b; border-radius: 10px; text-decoration: none; color: #fff; transition: 0.3s; } nav a:hover { background: #0ea5e9; } .pacotes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; padding: 30px; } .pacote { background: #1e293b; border-radius: 20px; padding: 20px; box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); cursor: pointer; transition: 0.3s; } .pacote:hover { transform: scale(1.03); box-shadow: 0 0 25px rgba(34, 211, 238, 0.4); } .pacote h3 { color: #22d3ee; } .pacote p { color: #cbd5e1; } footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; background: #0f172a; } /* Estilo moderno para os modais */ #modalSaque, #modalDeposito { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 9999; } .modal-content { background: #1e293b; padding: 25px 20px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 0 25px rgba(14,165,233,0.7); animation: zoomIn 0.3s ease; display: flex; flex-direction: column; gap: 15px; } .modal-content h3 { margin-top: 0; color: #22d3ee; text-align: center; font-size: 1.5em; } .modal-content label { font-weight: bold; color: #cbd5e1; margin-bottom: 5px; } .modal-content input, .modal-content select { padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1em; } .modal-content button { background: #0ea5e9; color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 1em; transition: background 0.3s ease; } .modal-content button:hover { background: #22d3ee; } .close-btn { text-align: center; margin-top: 10px; color: #94a3b8; cursor: pointer; font-size: 0.95em; transition: color 0.3s; } .close-btn:hover { color: #f87171; } @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } } </style> </head> <body> <div class="container"> <div id="authContainer"> <h2>Login</h2> <button onclick="netlifyIdentity.open()">Entrar</button> </div> </div> <div id="mainDashboard"> <header> <h1>Netlify Money</h1> <p>O sucesso do investimento</p> </header> <div class="barra-saldo"> <span id="userNome">Bem-vindo!</span> <div class="dropdown"> <button class="saldo-btn">Saldo: <span id="saldo">3.00</span> USDT</button> <div class="dropdown-content"> <button onclick="abrirModal()">Sacar</button> <button onclick="mostrarDeposito()">Depositar</button> </div> </div> <span onclick="abrirComissao()" style="cursor: pointer; color: white; font-weight: bold;"> Comissão: <span id="comissao-total">0</span> USDT </span> </div> <nav> <a href="#inicio">Início</a> <a href="#pacotes">Pacotes</a> <a href="https://t.me/+SbhOh2kpx8c5OWQ0" target="_blank">Grupo Telegram</a> </nav> <section id="inicio" style="text-align:center; padding: 40px 20px;"> <h2>Invista com segurança e receba lucros diários</h2> <p style="color: #94a3b8;">Nossa plataforma garante ganhos estáveis com transparência total.</p> </section> <section id="pacotes" class="pacotes"> <div class="pacote" onclick="investir(5, 1.5)"><h3>Pacote 1</h3><p>Investimento: 5 USDT</p><p>Lucro: 1.5USDT/dia</p></div> <div class="pacote" onclick="investir(10, 2)"><h3>Pacote 2</h3><p>Investimento: 10 USDT</p><p>Lucro: 2USDT/dia</p></div> <div class="pacote" onclick="investir(25, 5)"><h3>Pacote 3</h3><p>Investimento: 25 USDT</p><p>Lucro: 5USDT/dia</p></div> <div class="pacote" onclick="investir(100, 10)"><h3>Pacote 4</h3><p>Investimento: 100 USDT</p><p>Lucro: 10USDT/dia</p></div> <div class="pacote" onclick="investir(200, 20)"><h3>Pacote 5</h3><p>Investimento: 200 USDT</p><p>Lucro: 20USDT/dia</p></div> <div class="pacote" onclick="investir(500, 50)"><h3>Pacote 6</h3><p>Investimento: 500 USDT</p><p>Lucro: 50USDT/dia</p></div> <div class="pacote" onclick="investir(1000, 100)"><h3>Pacote 7</h3><p>Investimento: 1000 USDT</p><p>Lucro: 100USDT/dia</p></div> <div class="pacote" onclick="investir(2000, 200)"><h3>Pacote 8</h3><p>Investimento: 2000 USDT</p><p>Lucro: 200USDT/dia</p></div> <div class="pacote" onclick="investir(3000, 300)"><h3>Pacote 9</h3><p>Investimento: 3000 USDT</p><p>Lucro: 300USDT/dia</p></div> <div class="pacote" onclick="investir(10000, 1000)"><h3>Pacote 10</h3><p>Investimento: 10000 USDT</p><p>Lucro: 1000USDT/dia</p></div> </section> <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer> </div> <div id="modalSaque"> <div class="modal-content"> <h3>Solicitar Saque</h3> <label for="valorSaque">Valor (USDT)</label> <input type="number" id="valorSaque" placeholder="Ex: 50" /> <label for="enderecoCarteira">Endereço da carteira</label> <input type="text" id="enderecoCarteira" placeholder="Ex: 0x..." /> <label for="rede">Rede</label> <select id="rede"> <option>BEP20</option> <option>TRC20</option> </select> <button onclick="confirmarSaque()">Confirmar Saque</button> <div class="close-btn" onclick="fecharModal()">Fechar</div> </div> </div> <!-- Painel de Comissão --> <div id="painelComissao" style=" display:none; position:fixed; top:0;left:0; width:100%;height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;"> <div style="background:#1e293b;padding:20px;border-radius:15px;width:90%;max-width:400px;color:white;"> <h3>Comissão e Indicações</h3> <label>Seu link de convite</label> <input type="text" id="linkConvite" readonly style="width:100%;padding:10px;margin-bottom:10px;background:#0f172a;color:white;border:none;border-radius:8px;"> <h4>Indicações:</h4> <ul id="listaIndicados" style="padding-left:20px;"></ul> <p>Total de Comissão: <span id="comissao-total2">0</span> USDT</p> <button onclick="sacarComissao()" style="width:100%;padding:10px;background:#22d3ee;border:none;border-radius:10px;color:white;margin-top:10px;">Sacar Comissão</button> <button onclick="fecharComissao()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:10px;color:white;">Fechar</button> </div> </div> <!-- Modal Depósito --> <div id="modalDeposito"> <div class="modal-content"> <h3>Depósito Manual</h3> <div class="form-box"> <label>Valor para depósito (USDT)</label> <input type="number" id="valorDeposito" placeholder="Ex: 10"> </div> <label for="redeDeposito">Rede</label> <select id="redeDeposito" onchange="atualizarEndereco()"> <option value="BEP20">BEP20 (Binance Smart Chain)</option> <option value="TRC20">TRC20 (Tron)</option> <option value="APTOS">APTOS (Aptos Network)</option> </select> <label for="enderecoDeposito">Endereço para depósito</label> <input type="text" id="enderecoDeposito" readonly /> <label for="comprovativo">Comprovativo (imagem ou PDF)</label> <input type="file" id="comprovativo" accept=".jpg,.jpeg,.png,.pdf" /> <button onclick="solicitarDeposito()">Enviar Depósito</button> <div class="close-btn" onclick="fecharDeposito()">Fechar</div> </div> </div> <script> let saldo = 3.00; let rendimento = 0; // lucro diário total let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms) let indicados = []; let comissao = 0; // Atualiza saldo na tela function atualizarSaldo() { document.getElementById("saldo").innerText = saldo.toFixed(2); } // Função chamada quando o usuário investe em um pacote function investir(valor, lucroDiario) { if (saldo >= valor) { saldo -= valor; rendimento += lucroDiario; // Define a próxima data de pagamento (24h depois) proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; atualizarSaldo(); alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h."); // Envia comissão para o referenciador, se houver if (referencia) { fetch('/.netlify/functions/adicionarComissao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referenciador: referencia, valorComissao: valor * 0.10 }) }) .then(() => { console.log("Comissão enviada para o referenciador com sucesso"); }) .catch(err => { console.error("Erro ao enviar comissão para o referenciador:", err); }); } // --- NOVO: Atualiza saldo no backend (Netlify Function) --- fetch('/.netlify/functions/updateSaldo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: netlifyIdentity.currentUser()?.email, saldo: saldo }) }).catch(err => console.error("Erro ao atualizar saldo:", err)); } else { alert("Saldo insuficiente"); } } // Checa a cada minuto se já é hora de pagar rendimento setInterval(() => { if (proximoPagamento && Date.now() >= proximoPagamento) { saldo += rendimento; // adiciona o lucro diário proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; // agenda a próxima atualizarSaldo(); alert("Lucro diário creditado!"); } }, 60000); // verifica a cada 1 minuto function abrirModal(){document.getElementById('modalSaque').style.display='flex';} function fecharModal(){document.getElementById('modalSaque').style.display='none';} function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';} function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';} function confirmarSaque() { const valor = parseFloat(document.getElementById("valorSaque").value); const carteira = document.getElementById("enderecoCarteira").value; const rede = document.getElementById("rede").value; if (valor < 10) { alert("Saque mínimo é 10 USDT"); return; } if (valor > saldo) { alert("Saldo insuficiente"); return; } // Envia solicitação de saque para o backend fetch('/.netlify/functions/solicitarSaque', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: netlifyIdentity.currentUser()?.email, valor, carteira, rede }) }) .then(res => res.json()) .then(() => { alert("Pedido de saque enviado. Aguarde aprovação."); fecharModal(); }) .catch(err => { console.error(err); alert("Erro ao enviar pedido de saque."); }); } function abrirComissao() { const painel = document.getElementById("painelComissao"); painel.style.display = "flex"; // Pega email do usuário logado no Netlify Identity const emailUsuario = netlifyIdentity.currentUser()?.email || ""; // Gera link de convite dinâmico document.getElementById("linkConvite").value = window.location.origin + "?ref=" + encodeURIComponent(emailUsuario); // Atualiza lista de indicados document.getElementById("listaIndicados").innerHTML = indicados.map(i => "<li>" + i + "</li>").join(""); // Atualiza total de comissão document.getElementById("comissao-total2").innerText = comissao.toFixed(2); } function fecharComissao(){document.getElementById("painelComissao").style.display="none";} function sacarComissao() { const valor = parseFloat(prompt("Digite o valor que deseja sacar da comissão:")); if (!valor || isNaN(valor)) { alert("Valor inválido"); return; } if (valor < 5) { alert("Saque mínimo da comissão é 5 USDT"); return; } if (valor > comissao) { alert("Comissão insuficiente"); return; } const carteira = prompt("Informe o endereço da sua carteira:"); const rede = prompt("Informe a rede (BEP20 ou TRC20):"); if (!carteira || !rede) { alert("Carteira ou rede não informada"); return; } // Envia requisição para sacar comissão fetch('/.netlify/functions/sacarComissao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: netlifyIdentity.currentUser()?.email, valor, carteira, rede }) }) .then(res => res.json()) .then(data => { if (data.sucesso) { alert("Pedido de saque da comissão enviado com sucesso!"); comissao -= valor; document.getElementById("comissao-total").innerText = comissao.toFixed(2); document.getElementById("comissao-total2").innerText = comissao.toFixed(2); } else { alert("Erro: " + data.error); } }) .catch(err => { console.error(err); alert("Erro ao processar saque da comissão."); }); } // Captura ?ref= do link let referencia = null; const urlParams = new URLSearchParams(window.location.search); if (urlParams.has('ref')) { referencia = urlParams.get('ref'); } netlifyIdentity.on('login', user=>{ document.querySelector('.container').style.display='none'; document.getElementById('mainDashboard').style.display='block'; const nome = user.user_metadata && user.user_metadata.full_name ? user.user_metadata.full_name : user.email.split('@')[0]; document.getElementById('userNome').innerText = "Bem-vindo, " + nome; // Salva referência de convite, se existir if (referencia) { fetch('/.netlify/functions/salvarReferencia', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ convidado: user.email, convidou: referencia }) }).catch(err => console.error("Erro ao salvar referência:", err)); } // Registrar usuário no banco fetch('/.netlify/functions/registrarUsuario', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: user.email }) }); // Buscar comissão real do banco Neon fetch(`/.netlify/functions/getComissao?email=${user.email}`) .then(res => res.json()) .then(data => { if (data.comissao !== undefined) { comissao = parseFloat(data.comissao); document.getElementById("comissao-total").innerText = comissao.toFixed(2); document.getElementById("comissao-total2").innerText = comissao.toFixed(2); } }) .catch(err => console.error("Erro ao buscar comissão:", err)); // Buscar saldo real do banco Neon fetch(`/.netlify/functions/getSaldo?email=${user.email}`) .then(res => res.json()) .then(data => { if (data.saldo !== undefined) { saldo = parseFloat(data.saldo); atualizarSaldo(); } else { alert("Não foi possível buscar o saldo."); } }) .catch(err => { console.error(err); alert("Erro ao buscar saldo."); }); }); netlifyIdentity.on('logout',()=>{ document.querySelector('.container').style.display='flex'; document.getElementById('mainDashboard').style.display='none'; }); document.addEventListener("DOMContentLoaded",()=>{netlifyIdentity.init();}); </script> <script>// Atualiza endereço conforme rede selecionada function atualizarEndereco() { const rede = document.getElementById("redeDeposito").value; const campoEndereco = document.getElementById("enderecoDeposito"); if (rede === "BEP20") { campoEndereco.value = "0xa339998856200ccdf08599c074c9d4cac0453967"; } else if (rede === "TRC20") { campoEndereco.value = "TLr9iaud155quXYbMbEv1kdij9Wdmyg4Vv"; } else if (rede === "APTOS") { campoEndereco.value = "0xe24290096705d1657b367fe505494816264a75f343703746201d733f8328d5eb"; } } </script> // Função para envio do depósito <script> async function solicitarDeposito() { const valor = parseFloat(document.getElementById("valorDeposito").value); const rede = document.getElementById("redeDeposito").value; const file = document.getElementById("comprovativo").files[0]; if (!valor || !rede || !file) { alert("Preencha todos os campos e selecione um comprovativo."); return; } if (valor < 5) { alert("Depósito mínimo é 5 USDT"); return; } // Converter o arquivo em Base64 const toBase64 = file => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error); }); const comprovativoBase64 = await toBase64(file); const user = netlifyIdentity.currentUser(); const email = user?.email; try { const res = await fetch('/.netlify/functions/novoDeposito', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, valor, rede, comprovativo: comprovativoBase64 }) }); const data = await res.json(); if (!res.ok) throw new Error(data.error || "Erro ao enviar depósito"); alert("Depósito enviado com sucesso! Aguarde aprovação."); fecharDeposito(); } catch (err) { console.error(err); alert("Erro: " + err.message); } } </script> </body> </html>
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Netlify Money – O sucesso do investimento</title>
+
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(145deg, #0f172a, #1e293b);
+      color: white;
+    }
+    .container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #authContainer {
+      width: 90%;
+      max-width: 400px;
+      background: #1f2937;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 30px #0ea5e9;
+    }
+    #authContainer h2 { text-align: center; margin-bottom: 20px; color: #0ea5e9; }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 10px;
+      background: #0ea5e9;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #mainDashboard { display: none; }
+    header { background: #0f172a; padding: 20px; text-align: center; box-shadow: 0 0 15px #0ea5e9; }
+    header h1 { margin: 0; font-size: 2em; color: #22d3ee; }
+    header p { margin-top: 5px; font-size: 1.1em; color: #a1a1aa; }
+
+    .barra-saldo {
+      background: #1e3a8a; padding: 15px; display: flex;
+      justify-content: space-around; align-items: center; color: #fff; font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-content {
+      display: none; position: absolute; background-color: #1e293b;
+      min-width: 140px; right: 0; top: 45px; z-index: 1; border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+    .dropdown-content button {
+      width: 100%; padding: 10px; text-align: left; background: none;
+      border: none; color: white; cursor: pointer; font-size: 0.95em;
+    }
+    .dropdown-content button:hover { background-color: #0ea5e9; }
+    .dropdown:hover .dropdown-content { display: block; }
+    .saldo-btn {
+      background: #0ea5e9; padding: 10px 20px; border-radius: 30px; font-size: 0.95em;
+      box-shadow: 0 0 10px rgba(14,165,233,0.5); color: #fff; font-weight: bold;
+      border: none; cursor: pointer;
+    }
+    nav { display: flex; justify-content: center; gap: 15px; margin: 20px 0; }
+    nav a {
+      padding: 10px 15px; background: #1e293b; border-radius: 10px;
+      text-decoration: none; color: #fff; transition: 0.3s;
+    }
+    nav a:hover { background: #0ea5e9; }
+    .pacotes {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px; padding: 30px;
+    }
+    .pacote {
+      background: #1e293b; border-radius: 20px; padding: 20px;
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.2); cursor: pointer; transition: 0.3s;
+    }
+    .pacote:hover { transform: scale(1.03); box-shadow: 0 0 25px rgba(34, 211, 238, 0.4); }
+    .pacote h3 { color: #22d3ee; }
+    .pacote p { color: #cbd5e1; }
+    footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; background: #0f172a; }
+
+    /* Estilo moderno para os modais */
+#modalSaque, #modalDeposito {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: #1e293b;
+  padding: 25px 20px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 25px rgba(14,165,233,0.7);
+  animation: zoomIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  color: #22d3ee;
+  text-align: center;
+  font-size: 1.5em;
+}
+
+.modal-content label {
+  font-weight: bold;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+}
+
+.modal-content input,
+.modal-content select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: white;
+  font-size: 1em;
+}
+
+.modal-content button {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background 0.3s ease;
+}
+
+.modal-content button:hover {
+  background: #22d3ee;
+}
+
+.close-btn {
+  text-align: center;
+  margin-top: 10px;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.95em;
+  transition: color 0.3s;
+}
+.close-btn:hover { color: #f87171; }
+
+@keyframes zoomIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="authContainer">
+      <h2>Login</h2>
+      <button onclick="netlifyIdentity.open()">Entrar</button>
+    </div>
+  </div>
+
+  <div id="mainDashboard">
+    <header>
+      <h1>Netlify Money</h1>
+      <p>O sucesso do investimento</p>
+    </header>
+    <div class="barra-saldo">
+      <span id="userNome">Bem-vindo!</span>
+      <div class="dropdown">
+        <button class="saldo-btn">Saldo: <span id="saldo">3.00</span> USDT</button>
+        <div class="dropdown-content">
+          <button onclick="abrirModal()">Sacar</button>
+          <button onclick="mostrarDeposito()">Depositar</button>
+        </div>
+      </div>
+      <span onclick="abrirComissao()" style="cursor: pointer; color: white; font-weight: bold;">
+        Comissão: <span id="comissao-total">0</span> USDT
+      </span>
+    </div>
+
+    <nav>
+      <a href="#inicio">Início</a>
+      <a href="#pacotes">Pacotes</a>
+      <a href="https://t.me/+SbhOh2kpx8c5OWQ0" target="_blank">Grupo Telegram</a>
+    </nav>
+
+    <section id="inicio" style="text-align:center; padding: 40px 20px;">
+      <h2>Invista com segurança e receba lucros diários</h2>
+      <p style="color: #94a3b8;">Nossa plataforma garante ganhos estáveis com transparência total.</p>
+    </section>
+
+    <section id="pacotes" class="pacotes">
+      <div class="pacote" onclick="investir(5, 1.5)"><h3>Pacote 1</h3><p>Investimento: 5 USDT</p><p>Lucro: 1.5USDT/dia</p></div>
+      <div class="pacote" onclick="investir(10, 2)"><h3>Pacote 2</h3><p>Investimento: 10 USDT</p><p>Lucro: 2USDT/dia</p></div>
+      <div class="pacote" onclick="investir(25, 5)"><h3>Pacote 3</h3><p>Investimento: 25 USDT</p><p>Lucro: 5USDT/dia</p></div>
+      <div class="pacote" onclick="investir(100, 10)"><h3>Pacote 4</h3><p>Investimento: 100 USDT</p><p>Lucro: 10USDT/dia</p></div>
+      <div class="pacote" onclick="investir(200, 20)"><h3>Pacote 5</h3><p>Investimento: 200 USDT</p><p>Lucro: 20USDT/dia</p></div>
+      <div class="pacote" onclick="investir(500, 50)"><h3>Pacote 6</h3><p>Investimento: 500 USDT</p><p>Lucro: 50USDT/dia</p></div>
+      <div class="pacote" onclick="investir(1000, 100)"><h3>Pacote 7</h3><p>Investimento: 1000 USDT</p><p>Lucro: 100USDT/dia</p></div>
+      <div class="pacote" onclick="investir(2000, 200)"><h3>Pacote 8</h3><p>Investimento: 2000 USDT</p><p>Lucro: 200USDT/dia</p></div>
+      <div class="pacote" onclick="investir(3000, 300)"><h3>Pacote 9</h3><p>Investimento: 3000 USDT</p><p>Lucro: 300USDT/dia</p></div>
+      <div class="pacote" onclick="investir(10000, 1000)"><h3>Pacote 10</h3><p>Investimento: 10000 USDT</p><p>Lucro: 1000USDT/dia</p></div>
+    </section>
+
+    <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
+  </div>
+
+  <div id="modalSaque">
+  <div class="modal-content">
+    <h3>Solicitar Saque</h3>
+
+    <label for="valorSaque">Valor (USDT)</label>
+    <input type="number" id="valorSaque" placeholder="Ex: 50" />
+
+    <label for="enderecoCarteira">Endereço da carteira</label>
+    <input type="text" id="enderecoCarteira" placeholder="Ex: 0x..." />
+
+    <label for="rede">Rede</label>
+    <select id="rede">
+      <option>BEP20</option>
+      <option>TRC20</option>
+    </select>
+    <button onclick="confirmarSaque()">Confirmar Saque</button>
+    <div class="close-btn" onclick="fecharModal()">Fechar</div>
+  </div>
+  </div>
+
+  <!-- Painel de Comissão -->
+<div id="painelComissao" style="
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.7);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;">
+  
+  <div style="background:#1e293b;padding:20px;border-radius:15px;width:90%;max-width:400px;color:white;">
+    <h3>Comissão e Indicações</h3>
+    
+    <label>Seu link de convite</label>
+    <input type="text" id="linkConvite" readonly style="width:100%;padding:10px;margin-bottom:10px;background:#0f172a;color:white;border:none;border-radius:8px;">
+    
+    <h4>Indicações:</h4>
+    <ul id="listaIndicados" style="padding-left:20px;"></ul>
+    
+    <p>Total de Comissão: <span id="comissao-total2">0</span> USDT</p>
+    <button onclick="sacarComissao()" style="width:100%;padding:10px;background:#22d3ee;border:none;border-radius:10px;color:white;margin-top:10px;">Sacar Comissão</button>
+    <button onclick="fecharComissao()" style="width:100%;padding:10px;background:#0ea5e9;border:none;border-radius:10px;color:white;">Fechar</button>
+  </div>
+</div>
+
+<!-- Modal Depósito -->
+<div id="modalDeposito">
+  <div class="modal-content">
+    <h3>Depósito Manual</h3>
+
+    <div class="form-box">
+      <label>Valor para depósito (USDT)</label>
+      <input type="number" id="valorDeposito" placeholder="Ex: 10">
+    </div>
+
+    <label for="redeDeposito">Rede</label>
+    <select id="redeDeposito" onchange="atualizarEndereco()">
+      <option value="BEP20">BEP20 (Binance Smart Chain)</option>
+      <option value="TRC20">TRC20 (Tron)</option>
+      <option value="APTOS">APTOS (Aptos Network)</option>
+    </select>
+
+    <label for="enderecoDeposito">Endereço para depósito</label>
+    <input type="text" id="enderecoDeposito" readonly />
+
+    <label for="comprovativo">Comprovativo (imagem ou PDF)</label>
+    <input type="file" id="comprovativo" accept=".jpg,.jpeg,.png,.pdf" />
+
+    <button onclick="solicitarDeposito()">Enviar Depósito</button>
+    <div class="close-btn" onclick="fecharDeposito()">Fechar</div>
+  </div>
+</div>
+
+    <script>
+    let saldo = 3.00;
+let rendimento = 0; // lucro diário total
+let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms)
+let indicados = [];
+let comissao = 0;
+  
+// Atualiza saldo na tela
+function atualizarSaldo() {
+  document.getElementById("saldo").innerText = saldo.toFixed(2);
+}
+
+// Função chamada quando o usuário investe em um pacote
+function investir(valor, lucroDiario) {
+  if (saldo >= valor) {
+    saldo -= valor;
+    rendimento += lucroDiario;
+
+    // Define a próxima data de pagamento (24h depois)
+    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000;
+
+    atualizarSaldo();
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
+
+    // Envia comissão para o referenciador, se houver
+if (referencia) {
+  fetch('/.netlify/functions/adicionarComissao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      referenciador: referencia,
+      valorComissao: valor * 0.10
+    })
+  })
+  .then(() => {
+    console.log("Comissão enviada para o referenciador com sucesso");
+  })
+  .catch(err => {
+    console.error("Erro ao enviar comissão para o referenciador:", err);
+  });
+      }
+
+    // --- NOVO: Atualiza saldo no backend (Netlify Function) ---
+    fetch('/.netlify/functions/updateSaldo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        saldo: saldo
+      })
+    }).catch(err => console.error("Erro ao atualizar saldo:", err));
+
+  } else {
+    alert("Saldo insuficiente");
+  }
+}
+
+// Checa a cada minuto se já é hora de pagar rendimento
+setInterval(() => {
+  if (proximoPagamento && Date.now() >= proximoPagamento) {
+    saldo += rendimento; // adiciona o lucro diário
+    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; // agenda a próxima
+    atualizarSaldo();
+    alert("Lucro diário creditado!");
+  }
+}, 60000); // verifica a cada 1 minuto
+
+    function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
+    function fecharModal(){document.getElementById('modalSaque').style.display='none';}
+    function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
+    function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
+
+    function confirmarSaque() {
+  const valor = parseFloat(document.getElementById("valorSaque").value);
+  const carteira = document.getElementById("enderecoCarteira").value;
+  const rede = document.getElementById("rede").value;
+
+  if (valor < 10) { alert("Saque mínimo é 10 USDT"); return; }
+  if (valor > saldo) { alert("Saldo insuficiente"); return; }
+
+  // Envia solicitação de saque para o backend
+  fetch('/.netlify/functions/solicitarSaque', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: netlifyIdentity.currentUser()?.email,
+      valor,
+      carteira,
+      rede
+    })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Pedido de saque enviado. Aguarde aprovação.");
+    fecharModal();
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao enviar pedido de saque.");
+  });
+    }
+
+    function abrirComissao() {
+  const painel = document.getElementById("painelComissao");
+  painel.style.display = "flex";
+
+  // Pega email do usuário logado no Netlify Identity
+  const emailUsuario = netlifyIdentity.currentUser()?.email || "";
+
+  // Gera link de convite dinâmico
+  document.getElementById("linkConvite").value =
+    window.location.origin + "?ref=" + encodeURIComponent(emailUsuario);
+
+  // Atualiza lista de indicados
+  document.getElementById("listaIndicados").innerHTML =
+    indicados.map(i => "<li>" + i + "</li>").join("");
+
+  // Atualiza total de comissão
+  document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+      }
+    function fecharComissao(){document.getElementById("painelComissao").style.display="none";}
+
+      function sacarComissao() {
+  const valor = parseFloat(prompt("Digite o valor que deseja sacar da comissão:"));
+
+  if (!valor || isNaN(valor)) {
+    alert("Valor inválido");
+    return;
+  }
+
+  if (valor < 5) {
+    alert("Saque mínimo da comissão é 5 USDT");
+    return;
+  }
+
+  if (valor > comissao) {
+    alert("Comissão insuficiente");
+    return;
+  }
+
+  const carteira = prompt("Informe o endereço da sua carteira:");
+  const rede = prompt("Informe a rede (BEP20 ou TRC20):");
+
+  if (!carteira || !rede) {
+    alert("Carteira ou rede não informada");
+    return;
+  }
+
+  // Envia requisição para sacar comissão
+  fetch('/.netlify/functions/sacarComissao', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: netlifyIdentity.currentUser()?.email,
+      valor,
+      carteira,
+      rede
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.sucesso) {
+      alert("Pedido de saque da comissão enviado com sucesso!");
+      comissao -= valor;
+      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+      document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+    } else {
+      alert("Erro: " + data.error);
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao processar saque da comissão.");
+  });
+      }
+      
+      // Captura ?ref= do link
+let referencia = null;
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('ref')) {
+  referencia = urlParams.get('ref');
+      }
+    netlifyIdentity.on('login', user=>{
+  document.querySelector('.container').style.display='none';
+  document.getElementById('mainDashboard').style.display='block';
+
+  const nome = user.user_metadata && user.user_metadata.full_name 
+                ? user.user_metadata.full_name 
+                : user.email.split('@')[0];
+  document.getElementById('userNome').innerText = "Bem-vindo, " + nome;
+// Salva referência de convite, se existir
+  if (referencia) {
+    fetch('/.netlify/functions/salvarReferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        convidado: user.email,
+        convidou: referencia
+      })
+    }).catch(err => console.error("Erro ao salvar referência:", err));
+      }
+      // Registrar usuário no banco
+fetch('/.netlify/functions/registrarUsuario', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: user.email })
+});
+      // Buscar comissão real do banco Neon
+fetch(`/.netlify/functions/getComissao?email=${user.email}`)
+  .then(res => res.json())
+  .then(data => {
+    if (data.comissao !== undefined) {
+      comissao = parseFloat(data.comissao);
+      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+      document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
+    }
+  })
+  .catch(err => console.error("Erro ao buscar comissão:", err));
+  // Buscar saldo real do banco Neon
+  fetch(`/.netlify/functions/getSaldo?email=${user.email}`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.saldo !== undefined) {
+          saldo = parseFloat(data.saldo);
+          atualizarSaldo();
+        } else {
+          alert("Não foi possível buscar o saldo.");
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Erro ao buscar saldo.");
+    });
+});
+    netlifyIdentity.on('logout',()=>{
+      document.querySelector('.container').style.display='flex';
+      document.getElementById('mainDashboard').style.display='none';
+    });
+    document.addEventListener("DOMContentLoaded",()=>{netlifyIdentity.init();});
+  </script>
+  <script>// Atualiza endereço conforme rede selecionada
+function atualizarEndereco() {
+  const rede = document.getElementById("redeDeposito").value;
+  const campoEndereco = document.getElementById("enderecoDeposito");
+
+  if (rede === "BEP20") {
+    campoEndereco.value = "0xa339998856200ccdf08599c074c9d4cac0453967";
+  } else if (rede === "TRC20") {
+    campoEndereco.value = "TLr9iaud155quXYbMbEv1kdij9Wdmyg4Vv";
+  } else if (rede === "APTOS") {
+    campoEndereco.value = "0xe24290096705d1657b367fe505494816264a75f343703746201d733f8328d5eb";
+  }
+}
+  </script>
+// Função para envio do depósito
+<script>
+async function solicitarDeposito() {
+  const valor = parseFloat(document.getElementById("valorDeposito").value);
+  const rede = document.getElementById("redeDeposito").value;
+  const file = document.getElementById("comprovativo").files[0];
+
+  if (!valor || !rede || !file) {
+    alert("Preencha todos os campos e selecione um comprovativo.");
+    return;
+  }
+
+  if (valor < 5) {
+    alert("Depósito mínimo é 5 USDT");
+    return;
+  }
+
+  // Converter o arquivo em Base64
+  const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+
+  const comprovativoBase64 = await toBase64(file);
+
+  const user = netlifyIdentity.currentUser();
+  const email = user?.email;
+
+  try {
+    const res = await fetch('/.netlify/functions/novoDeposito', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        valor,
+        rede,
+        comprovativo: comprovativoBase64
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao enviar depósito");
+
+    alert("Depósito enviado com sucesso! Aguarde aprovação.");
+    fecharDeposito();
+  } catch (err) {
+    console.error(err);
+    alert("Erro: " + err.message);
+  }
+}
+</script>
+</body>
+</html>
