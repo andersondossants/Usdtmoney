@@ -426,29 +426,31 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has('ref')) {
   referencia = urlParams.get('ref');
       }
-    netlifyIdentity.on('login', user=>{
-  document.querySelector('.container').style.display='none';
-  document.getElementById('mainDashboard').style.display='block';
+    netlifyIdentity.on('login', user => {
+  document.querySelector('.container').style.display = 'none';
+  document.getElementById('mainDashboard').style.display = 'block';
 
   const nome = user.user_metadata && user.user_metadata.full_name 
                 ? user.user_metadata.full_name 
                 : user.email.split('@')[0];
   document.getElementById('userNome').innerText = "Bem-vindo, " + nome;
 
-// Salva referência de convite, se existir
-if (referencia) {
-  fetch('/.netlify/functions/salvarReferencia', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      convidado: user.email,
-      convidou: referencia
+  // ✅ Salva referência de convite, se existir
+  if (referencia) {
+    fetch('/.netlify/functions/salvarReferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        convidado: user.email,
+        convidou: referencia
+      })
     })
-  })
-  .catch(err => console.error("Erro ao salvar referência:", err));
-}
+    .catch(err => console.error("Erro ao salvar referência:", err));
+  }
 
-// Função para sacar comissão (transferir para saldo)
+  // ... (aqui continua o restante do código do login)
+});
+// ✅ Função para sacar comissão (transferir para saldo)
 function sacarComissao() {
   const valor = parseFloat(prompt("Digite o valor que deseja transferir da comissão para o saldo:"));
 
@@ -492,16 +494,8 @@ function sacarComissao() {
     console.error(err);
     alert("Erro ao processar saque da comissão.");
   });
-    }
-      fetch('/.netlify/functions/salvarReferencia', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    convidado: user.email,
-    convidou: referencia
-  })
-})
-.catch(err => console.error("Erro ao salvar referência:", err));
+      }
+
       
       // Registrar usuário no banco
 fetch('/.netlify/functions/registrarUsuario', {
