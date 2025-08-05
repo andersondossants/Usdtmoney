@@ -454,8 +454,8 @@ function fecharHistorico() {
 }
 
 function carregarHistorico() {
-  const lista = document.getElementById("listaHistorico");
-  lista.innerHTML = "<li>Carregando histórico...</li>";
+  const container = document.getElementById("listaHistorico");
+  container.innerHTML = "<p style='text-align:center;'>🔄 Carregando transações...</p>";
 
   const email = netlifyIdentity.currentUser()?.email;
 
@@ -465,29 +465,30 @@ function carregarHistorico() {
     body: JSON.stringify({ email })
   })
     .then(res => res.json())
-    .then(dados => {
-      if (!dados || dados.length === 0) {
-        lista.innerHTML = "<li>Nenhuma transação encontrada.</li>";
+    .then(transacoes => {
+      if (!transacoes || transacoes.length === 0) {
+        container.innerHTML = "<p style='text-align:center;'>⚠️ Nenhuma transação encontrada.</p>";
         return;
       }
 
-      lista.innerHTML = "";
-      dados.forEach(transacao => {
-        const item = document.createElement("li");
-        item.innerHTML = `
-          <strong>Tipo:</strong> ${transacao.tipo} |
-          <strong>Valor:</strong> R$ ${parseFloat(transacao.valor).toFixed(2)} |
-          <strong>Data:</strong> ${new Date(transacao.data).toLocaleString()}
+      container.innerHTML = "";
+      transacoes.forEach(tx => {
+        const div = document.createElement("div");
+        div.className = "card3D";
+        div.innerHTML = `
+          <p><strong>🧾 Tipo:</strong> ${tx.tipo}</p>
+          <p><strong>💸 Valor:</strong> $${parseFloat(tx.valor).toFixed(2)}</p>
+          <p><strong>📅 Data:</strong> ${new Date(tx.data).toLocaleString()}</p>
         `;
-        lista.appendChild(item);
+        container.appendChild(div);
       });
     })
     .catch(err => {
       console.error(err);
-      lista.innerHTML = "<li>Erro ao carregar histórico.</li>";
+      container.innerHTML = "<p style='text-align:center;'>❌ Erro ao carregar o histórico.</p>";
     });
-}
-
+}  
+    
 function abrirSuporte() {
   window.open("https://t.me/Kormely", "_blank"); // ou link do suporte
 }
