@@ -231,6 +231,15 @@
 
     <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
   </div>
+  
+  <!-- Modal Histórico -->
+<div id="modalHistorico" style="display:none; position:fixed; top:0;left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;">
+  <div style="background:#1e293b; padding:20px; border-radius:15px; width:90%; max-width:500px; color:white;">
+    <h3>Histórico de Transações</h3>
+    <ul id="listaHistorico" style="padding-left:20px; max-height:400px; overflow-y:auto;"></ul>
+    <button onclick="fecharHistorico()" style="width:100%; padding:10px; margin-top:15px; background:#0ea5e9; border:none; border-radius:10px; color:white;">Fechar</button>
+  </div>
+</div>
 
   <div id="modalSaque">
   <div class="modal-content">
@@ -418,7 +427,38 @@ setInterval(() => {
 }
 
 function abrirHistorico() {
-  alert("Seu histórico de transações será exibido aqui.");
+  const email = netlifyIdentity.currentUser()?.email;
+  if (!email) {
+    alert("Usuário não autenticado.");
+    return;
+  }
+
+  fetch(`/.netlify/functions/getHistorico?email=${email}`)
+    .then(res => res.json())
+    .then(data => {
+      const lista = document.getElementById("listaHistorico");
+      lista.innerHTML = "";
+
+      if (!data.transacoes || data.transacoes.length === 0) {
+        lista.innerHTML = "<li>Nenhuma transação encontrada.</li>";
+      } else {
+        data.transacoes.forEach(tx => {
+          const li = document.createElement("li");
+          li.innerText = `[${new Date(tx.data).toLocaleString()}] ${tx.tipo}: $${parseFloat(tx.valor).toFixed(2)}`;
+          lista.appendChild(li);
+        });
+      }
+
+      document.getElementById("modalHistorico").style.display = "flex";
+    })
+    .catch(err => {
+      console.error("Erro ao buscar histórico:", err);
+      alert("Erro ao carregar histórico.");
+    });
+}
+
+function fecharHistorico() {
+  document.getElementById("modalHistorico").style.display = "none";
 }
 
 function abrirSuporte() {
