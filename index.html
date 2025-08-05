@@ -415,6 +415,17 @@ setInterval(() => {
   .then(() => {
     alert("Pedido de saque enviado. Aguarde aprovação.");
     fecharModal();
+     // Salva transação de saque no histórico
+fetch('/.netlify/functions/salvarTransacao', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: netlifyIdentity.currentUser()?.email,
+    tipo: "Saque",
+    valor: valor,
+    data: new Date().toISOString()
+  })
+});
   })
   .catch(err => {
     console.error(err);
@@ -662,6 +673,17 @@ async function solicitarDeposito() {
 
     alert("Depósito enviado com sucesso! Aguarde aprovação.");
     fecharDeposito();
+    // Salva transação de depósito no histórico
+fetch('/.netlify/functions/salvarTransacao', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email,
+    tipo: "Depósito",
+    valor,
+    data: new Date().toISOString()
+  })
+});
   } catch (err) {
     console.error(err);
     alert("Erro: " + err.message);
