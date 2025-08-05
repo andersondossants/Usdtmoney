@@ -232,14 +232,63 @@
     <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
   </div>
   
-  <!-- Modal Histórico -->
-<div id="modalHistorico" style="display:none; position:fixed; top:0;left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;">
+  <!-- Botão para abrir o histórico -->
+<button onclick="abrirHistorico()" style="padding:10px 20px; background:#0ea5e9; color:white; border:none; border-radius:10px;">Ver Histórico</button>
+
+<!-- Modal do histórico -->
+<div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;">
   <div style="background:#1e293b; padding:20px; border-radius:15px; width:90%; max-width:500px; color:white;">
     <h3>Histórico de Transações</h3>
     <ul id="listaHistorico" style="padding-left:20px; max-height:400px; overflow-y:auto;"></ul>
     <button onclick="fecharHistorico()" style="width:100%; padding:10px; margin-top:15px; background:#0ea5e9; border:none; border-radius:10px; color:white;">Fechar</button>
   </div>
 </div>
+
+<!-- Script com as funções -->
+<script>
+  function abrirHistorico() {
+    document.getElementById("modalHistorico").style.display = "flex";
+    carregarHistorico(); // chama a função que busca o histórico
+  }
+
+  function fecharHistorico() {
+    document.getElementById("modalHistorico").style.display = "none";
+  }
+
+  async function carregarHistorico() {
+    const lista = document.getElementById("listaHistorico");
+    lista.innerHTML = "<li>Carregando histórico...</li>";
+
+    try {
+      const resposta = await fetch("https://app-billowing-brook-28669549.dpl.myneon.app/getHistorico");
+
+      if (!resposta.ok) {
+        throw new Error("Erro ao buscar histórico: " + resposta.status);
+      }
+
+      const dados = await resposta.json();
+
+      if (dados.length === 0) {
+        lista.innerHTML = "<li>Nenhuma transação encontrada.</li>";
+        return;
+      }
+
+      lista.innerHTML = "";
+      dados.forEach(transacao => {
+        const item = document.createElement("li");
+        item.innerHTML = `
+          <strong>Tipo:</strong> ${transacao.tipo} |
+          <strong>Valor:</strong> R$ ${parseFloat(transacao.valor).toFixed(2)} |
+          <strong>Data:</strong> ${new Date(transacao.data).toLocaleString()}
+        `;
+        lista.appendChild(item);
+      });
+    } catch (erro) {
+      console.error(erro);
+      lista.innerHTML = "<li>Erro ao carregar histórico.</li>";
+    }
+  }
+</script>
 
   <div id="modalSaque">
   <div class="modal-content">
@@ -435,41 +484,6 @@ fetch('/.netlify/functions/salvarTransacao', {
   
   function abrirPerfil() {
   alert("Seu perfil ainda está em desenvolvimento.");
-}
-
-function abrirHistorico() {
-  const email = netlifyIdentity.currentUser()?.email;
-  if (!email) {
-    alert("Usuário não autenticado.");
-    return;
-  }
-
-  fetch(`/.netlify/functions/getHistorico?email=${email}`)
-    .then(res => res.json())
-    .then(data => {
-      const lista = document.getElementById("listaHistorico");
-      lista.innerHTML = "";
-
-      if (!data.transacoes || data.transacoes.length === 0) {
-        lista.innerHTML = "<li>Nenhuma transação encontrada.</li>";
-      } else {
-        data.transacoes.forEach(tx => {
-          const li = document.createElement("li");
-          li.innerText = `[${new Date(tx.data).toLocaleString()}] ${tx.tipo}: $${parseFloat(tx.valor).toFixed(2)}`;
-          lista.appendChild(li);
-        });
-      }
-
-      document.getElementById("modalHistorico").style.display = "flex";
-    })
-    .catch(err => {
-      console.error("Erro ao buscar histórico:", err);
-      alert("Erro ao carregar histórico.");
-    });
-}
-
-function fecharHistorico() {
-  document.getElementById("modalHistorico").style.display = "none";
 }
 
 function abrirSuporte() {
