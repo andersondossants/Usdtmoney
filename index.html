@@ -54,8 +54,15 @@
     }
     .dropdown { position: relative; display: inline-block; }
     .dropdown-content {
-      display: none; position: absolute; background-color: #1e293b;
-      min-width: 140px; right: 0; top: 45px; z-index: 1; border-radius: 10px;
+      display: none;
+      position: absolute;
+      background-color: #1e293b;
+      min-width: 180px;
+      top: 45px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 999;
+      border-radius: 10px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.4);
     }
     .dropdown-content button {
