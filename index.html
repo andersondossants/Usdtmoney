@@ -323,32 +323,37 @@ function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
-
-    // Define a próxima data de pagamento (24h depois)
     proximoPagamento = Date.now() + 24 * 60 * 60 * 1000;
-
     atualizarSaldo();
     alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
 
-    // Envia comissão para o referenciador, se houver
-if (referencia) {
-  fetch('/.netlify/functions/adicionarComissao', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      referenciador: referencia,
-      valorComissao: valor * 0.10
-    })
-  })
-  .then(() => {
-    console.log("Comissão enviada para o referenciador com sucesso");
-  })
-  .catch(err => {
-    console.error("Erro ao enviar comissão para o referenciador:", err);
-  });
-      }
+    // ✅ Salvar transação no histórico
+    fetch('/.netlify/functions/salvarTransacao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        tipo: "Investimento",
+        valor: valor,
+        data: new Date().toISOString()
+      })
+    });
 
-    // --- NOVO: Atualiza saldo no backend (Netlify Function) ---
+    // ✅ Envia comissão para o referenciador, se houver
+    if (referencia) {
+      fetch('/.netlify/functions/adicionarComissao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referenciador: referencia,
+          valorComissao: valor * 0.10
+        })
+      }).catch(err => {
+        console.error("Erro ao enviar comissão:", err);
+      });
+    }
+
+    // ✅ Atualiza saldo no backend
     fetch('/.netlify/functions/updateSaldo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
