@@ -165,6 +165,12 @@
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+    /* Corrige apenas o menu do botão "Bem-vindo, Usuário" */
+.dropdown-user .dropdown-content {
+  left: 0;
+  right: auto;
+  top: 45px;
+}
     
   </style>
 </head>
@@ -182,7 +188,7 @@
       <p>O sucesso do investimento</p>
     </header>
     <div class="barra-saldo">
-      <div class="dropdown">
+      <div class="dropdown dropdown-user">
   <span id="userNome" class="user-btn">Bem-vindo, Usuário ▼</span>
   <div class="dropdown-content">
     <button onclick="abrirPerfil()">Ver Perfil</button>
