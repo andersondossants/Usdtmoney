@@ -232,36 +232,42 @@
     <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
   </div> 
   
-<!-- Modal do histórico -->
-<div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;">
-  <div style="background:#1e293b; padding:20px; border-radius:15px; width:90%; max-width:500px; color:white;">
-    <h3>Histórico de Transações</h3>
-    <ul id="listaHistorico" style="padding-left:20px; max-height:400px; overflow-y:auto;"></ul>
-    <!-- Botão para abrir o histórico -->
-    <button onclick="abrirHistorico()" style="padding:10px 20px; background:#0ea5e9; color:white; border:none; border-radius:10px;">Ver Histórico</button>
-    <button onclick="fecharHistorico()" style="width:100%; padding:10px; margin-top:15px; background:#0ea5e9; border:none; border-radius:10px; color:white;">Fechar</button>
+<!-- Modal do histórico com visual 3D -->
+<div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999; animation:fadeIn 0.4s;">
+  <div style="background:#0f172a; padding:25px; border-radius:20px; width:95%; max-width:550px; color:white; box-shadow:0 10px 25px rgba(0,0,0,0.6); transform:scale(1); animation:slideUp 0.4s;">
+    <h2 style="text-align:center; margin-bottom:20px;">📊 Histórico de Transações</h2>
+    <div id="listaHistorico" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;"></div>
+    <button onclick="abrirHistorico()" style="padding:12px 24px; background:#0ea5e9; color:white; border:none; border-radius:12px; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">📜 Ver Histórico</button>
+    <button onclick="fecharHistorico()" style="margin-top:20px; width:100%; padding:12px; background:#1e40af; border:none; color:white; border-radius:10px; font-size:15px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">Fechar</button>
   </div>
 </div>
-  
-  <div id="modalSaque">
-  <div class="modal-content">
-    <h3>Solicitar Saque</h3>
 
-    <label for="valorSaque">Valor (USDT)</label>
-    <input type="number" id="valorSaque" placeholder="Ex: 50" />
+<!-- Animações -->
+<style>
+@keyframes slideUp {
+  from { transform: translateY(50px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
-    <label for="enderecoCarteira">Endereço da carteira</label>
-    <input type="text" id="enderecoCarteira" placeholder="Ex: 0x..." />
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-    <label for="rede">Rede</label>
-    <select id="rede">
-      <option>BEP20</option>
-      <option>TRC20</option>
-    </select>
-    <button onclick="confirmarSaque()">Confirmar Saque</button>
-    <div class="close-btn" onclick="fecharModal()">Fechar</div>
-  </div>
-  </div> 
+.card3D {
+  background: linear-gradient(145deg, #1e293b, #0f172a);
+  border-radius: 15px;
+  padding: 15px 20px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+}
+
+.card3D:hover {
+  transform: rotateX(4deg) rotateY(-4deg) scale(1.02);
+  box-shadow: 0 20px 35px rgba(0,0,0,0.6);
+}
+</style>
 
   <!-- Painel de Comissão -->
 <div id="painelComissao" style="
