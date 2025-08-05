@@ -1,12 +1,13 @@
-// listarTransacoes.js
-
 const { Client } = require("pg");
 
 exports.handler = async (event) => {
   const email = event.queryStringParameters?.email;
 
   if (!email) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Email obrigatório" }) };
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Email obrigatório" })
+    };
   }
 
   const client = new Client({
@@ -16,10 +17,12 @@ exports.handler = async (event) => {
 
   try {
     await client.connect();
+
     const result = await client.query(
       "SELECT tipo, valor, data FROM transacoes WHERE email = $1 ORDER BY data DESC",
       [email]
     );
+
     await client.end();
 
     return {
@@ -30,7 +33,7 @@ exports.handler = async (event) => {
     console.error("Erro ao listar transações:", error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message })
+      body: JSON.stringify({ error: "Erro interno ao buscar transações" })
     };
   }
 };
