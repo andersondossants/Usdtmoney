@@ -182,7 +182,17 @@
       <p>O sucesso do investimento</p>
     </header>
     <div class="barra-saldo">
-      <span id="userNome">Bem-vindo!</span>
+      <div class="dropdown">
+  <span id="userNome" class="user-btn">Bem-vindo, Usuário ▼</span>
+  <div class="dropdown-content">
+    <button onclick="abrirPerfil()">Ver Perfil</button>
+    <button onclick="abrirComissao()">Comissão e Convites</button>
+    <button onclick="abrirHistorico()">Histórico de Transações</button>
+    <button onclick="verPacote()">Pacote Comprado</button>
+    <button onclick="abrirSuporte()">Suporte</button>
+    <button onclick="netlifyIdentity.logout()">Sair</button>
+  </div>
+</div>
       <div class="dropdown">
         <button class="saldo-btn">Saldo: <span id="saldo">3.00</span> USDT</button>
         <div class="dropdown-content">
@@ -397,7 +407,27 @@ setInterval(() => {
     alert("Erro ao enviar pedido de saque.");
   });
     }
+  
+  function abrirPerfil() {
+  alert("Seu perfil ainda está em desenvolvimento.");
+}
 
+function abrirHistorico() {
+  alert("Seu histórico de transações será exibido aqui.");
+}
+
+function abrirSuporte() {
+  window.open("https://t.me/Kormely", "_blank"); // ou link do suporte
+}
+
+function verPacote() {
+  if (rendimento > 0) {
+    alert("Você comprou um pacote que gera " + rendimento.toFixed(2) + " USDT por dia.");
+  } else {
+    alert("Você ainda não comprou nenhum pacote.");
+  }
+}
+  
     function abrirComissao() {
   const painel = document.getElementById("painelComissao");
   painel.style.display = "flex";
