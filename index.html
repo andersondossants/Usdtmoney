@@ -234,6 +234,7 @@
         Comissão: <span id="comissao-total">0</span> USDT
        </span> 
     </div>
+
     <nav>
       <a href="#inicio">Início</a>
       <a href="#pacotes">Pacotes</a>
@@ -246,9 +247,9 @@
     </section>
 
     <section id="pacotes" class="pacotes">
-      <div class="pacote" onclick="investir(5, 1.1)"><h3>Pacote 1</h3><p>Investimento: 5 USDT</p><p>Lucro: 1.5USDT/dia</p></div>
+      <div class="pacote" onclick="investir(5, 1.5)"><h3>Pacote 1</h3><p>Investimento: 5 USDT</p><p>Lucro: 1.5USDT/dia</p></div>
       <div class="pacote" onclick="investir(10, 2)"><h3>Pacote 2</h3><p>Investimento: 10 USDT</p><p>Lucro: 2USDT/dia</p></div>
-      <div class="pacote" onclick="investir(25, 4)"><h3>Pacote 3</h3><p>Investimento: 25 USDT</p><p>Lucro: 5USDT/dia</p></div>
+      <div class="pacote" onclick="investir(25, 5)"><h3>Pacote 3</h3><p>Investimento: 25 USDT</p><p>Lucro: 5USDT/dia</p></div>
       <div class="pacote" onclick="investir(100, 10)"><h3>Pacote 4</h3><p>Investimento: 100 USDT</p><p>Lucro: 10USDT/dia</p></div>
       <div class="pacote" onclick="investir(200, 20)"><h3>Pacote 5</h3><p>Investimento: 200 USDT</p><p>Lucro: 20USDT/dia</p></div>
       <div class="pacote" onclick="investir(500, 50)"><h3>Pacote 6</h3><p>Investimento: 500 USDT</p><p>Lucro: 50USDT/dia</p></div>
@@ -260,26 +261,6 @@
 
     <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
   </div> 
-
-  <div id="modalSaque">
-  <div class="modal-content">
-    <h3>Solicitar Saque</h3>
-
-    <label for="valorSaque">Valor (USDT)</label>
-    <input type="number" id="valorSaque" placeholder="Ex: 50" />
-
-    <label for="enderecoCarteira">Endereço da carteira</label>
-    <input type="text" id="enderecoCarteira" placeholder="Ex: 0x..." />
-
-    <label for="rede">Rede</label>
-    <select id="rede">
-      <option>BEP20</option>
-      <option>TRC20</option>
-    </select>
-    <button onclick="confirmarSaque()">Confirmar Saque</button>
-    <div class="close-btn" onclick="fecharModal()">Fechar</div>
-  </div>
-  </div>
   
 <!-- Modal do histórico com visual 3D -->
 <div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999; animation:fadeIn 0.4s;">
@@ -333,9 +314,8 @@
   background: #22d3ee;
   transform: scale(1.03);
   }
- 
 </style>
-    
+
   <!-- Painel de Comissão -->
 <div id="painelComissao" style="
   display:none;
@@ -560,63 +540,12 @@ function abrirSuporte() {
   window.open("https://t.me/Kormely", "_blank"); // ou link do suporte
 }
 
-function registrarPacote() {
-  const email = netlifyIdentity.currentUser()?.email;
-
-  if (!email) {
-    alert("⚠️ Você precisa estar logado para registrar o pacote.");
-    return;
+function verPacote() {
+  if (rendimento > 0) {
+    alert("Você comprou um pacote que gera " + rendimento.toFixed(2) + " USDT por dia.");
+  } else {
+    alert("Você ainda não comprou nenhum pacote.");
   }
-
-  const pacote = {
-    email,
-    tipo: "Pacote Comprado",
-    valor: "100.00", // ou qualquer valor dinâmico que quiser usar
-    data: new Date().toISOString()
-  };
-
-  fetch("/.netlify/functions/registrarTransacao", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(pacote)
-  })
-    .then(res => res.json())
-    .then(dado => {
-      alert("✅ Pacote registrado com sucesso!");
-      carregarHistorico(); // Atualiza a lista logo após registrar
-    })
-    .catch(err => {
-      console.error(err);
-      alert("❌ Erro ao registrar o pacote.");
-    });
-}
-  if (!emailUsuario) {
-    alert("Usuário não autenticado.");
-    return;
-  }
-
-  // ✅ Registrar transação como 'Pacote Comprado' no histórico
-  fetch('/.netlify/functions/salvarTransacao', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: emailUsuario,
-      tipo: "Pacote Comprado",
-      valor: valorPacote,
-      data: new Date().toISOString()
-    })
-  })
-  .then(response => {
-    if (response.ok) {
-      alert("Pacote comprado registrado com sucesso!");
-    } else {
-      alert("Erro ao registrar o pacote.");
-    }
-  })
-  .catch(error => {
-    console.error("Erro ao salvar o pacote:", error);
-    alert("Erro de conexão.");
-  });
 }
   
     function abrirComissao() {
@@ -826,4 +755,4 @@ fetch('/.netlify/functions/salvarTransacao', {
 }
 </script>
 </body>
-</html>
+                                                        </html>
