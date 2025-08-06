@@ -429,12 +429,8 @@ function investir(valor, lucroDiario) {
     proximoPagamento = Date.now() + 60 * 1000; // 1 minuto
     atualizarSaldo();
     alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 1 minuto.");
-  } else {
-    alert("Saldo insuficiente para investir.");
-  }
-}
 
-      // ✅ Salvar transação no histórico
+    // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -445,6 +441,25 @@ function investir(valor, lucroDiario) {
         data: new Date().toISOString()
       })
     });
+
+    // ✅ Envia comissão para o referenciador, se houver
+    if (referencia) {
+      fetch('/.netlify/functions/adicionarComissao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referenciador: referencia,
+          valorComissao: valor * 0.10
+        })
+      }).catch(err => {
+        console.error("Erro ao enviar comissão:", err);
+      });
+    }
+
+  } else {
+    alert("Saldo insuficiente para investir.");
+  }
+      }
 
     // ✅ Envia comissão para o referenciador, se houver
     if (referencia) {
