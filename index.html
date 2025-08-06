@@ -217,9 +217,10 @@
   <div class="dropdown-content">
     <button onclick="abrirPerfil()">Ver Perfil</button>
     <button onclick="abrirComissao()">Comissão e Convites</button>
-    <button onclick="abrirHistorico()">Histórico de Transações</button>
+    
+    <button onclick="abrirHistorico()" style="padding:12px 24px; background:#0ea5e9; color:white; border:none; border-radius:12px; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">📜 Ver Histórico</button>
     <button onclick="verPacote()" class="botao3D" style="margin-top: 20px;">
-  🎁 Ver Meu Pacote
+  🎁 Meu Pacote
     </button>
     <button onclick="abrirSuporte()">Suporte</button>
     <button onclick="netlifyIdentity.logout()">Sair</button>
@@ -269,7 +270,6 @@
   <div style="background:#0f172a; padding:25px; border-radius:20px; width:95%; max-width:550px; color:white; box-shadow:0 10px 25px rgba(0,0,0,0.6); transform:scale(1); animation:slideUp 0.4s;">
     <h2 style="text-align:center; margin-bottom:20px;">📊 Histórico de Transações</h2>
     <div id="listaHistorico" style="display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto;"></div>
-    <button onclick="abrirHistorico()" style="padding:12px 24px; background:#0ea5e9; color:white; border:none; border-radius:12px; font-size:16px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">📜 Ver Histórico</button>
     <button onclick="fecharHistorico()" style="margin-top:20px; width:100%; padding:12px; background:#1e40af; border:none; color:white; border-radius:10px; font-size:15px; box-shadow:0 4px 12px rgba(0,0,0,0.3);">Fechar</button>
   </div>
 </div>
