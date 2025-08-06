@@ -262,6 +262,26 @@
     <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
   </div> 
   
+  <div id="modalSaque">
+  <div class="modal-content">
+    <h3>Solicitar Saque</h3>
+
+    <label for="valorSaque">Valor (USDT)</label>
+    <input type="number" id="valorSaque" placeholder="Ex: 50" />
+
+    <label for="enderecoCarteira">Endereço da carteira</label>
+    <input type="text" id="enderecoCarteira" placeholder="Ex: 0x..." />
+
+    <label for="rede">Rede</label>
+    <select id="rede">
+      <option>BEP20</option>
+      <option>TRC20</option>
+    </select>
+    <button onclick="confirmarSaque()">Confirmar Saque</button>
+    <div class="close-btn" onclick="fecharModal()">Fechar</div>
+  </div>
+  </div>
+  
 <!-- Modal do histórico com visual 3D -->
 <div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999; animation:fadeIn 0.4s;">
   <div style="background:#0f172a; padding:25px; border-radius:20px; width:95%; max-width:550px; color:white; box-shadow:0 10px 25px rgba(0,0,0,0.6); transform:scale(1); animation:slideUp 0.4s;">
@@ -766,15 +786,5 @@ fetch('/.netlify/functions/salvarTransacao', {
   }
 }
 </script>
-  <!-- Modal de Pacote Comprado -->
-<div id="modalPacote" class="modal-container">
-  <div class="modal-content">
-    <h2 style="margin-bottom: 15px;">🎁 Detalhes do Pacote</h2>
-    <div id="conteudoPacote">
-      <!-- Conteúdo dinâmico será exibido aqui -->
-    </div>
-    <button onclick="fecharModalPacote()" class="botao3D" style="margin-top: 20px;">Fechar</button>
-  </div>
-</div>
 </body>
-                                                        </html>
+</html>
