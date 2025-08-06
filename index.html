@@ -478,10 +478,10 @@ function investir(valor, lucroDiario) {
 // Checa a cada minuto se já é hora de pagar rendimento
 setInterval(() => {
   if (proximoPagamento && Date.now() >= proximoPagamento) {
-    saldo += rendimento; // adiciona o lucro diário
-    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; // agenda a próxima
+    saldo += rendimento; // adiciona o lucro
+    proximoPagamento = Date.now() + 1 * 60 * 1000; // agenda próximo em 1 minuto
     atualizarSaldo();
-    alert("Lucro diário creditado!");
+    alert("Lucro creditado!");
   }
 }, 60000); // verifica a cada 1 minuto
 
