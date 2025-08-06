@@ -414,26 +414,84 @@
 </div> 
 
     <script>
-    let saldo = 3.00;
-let rendimento = 0; // lucro diário total
-let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms)
-let indicados = [];
-let comissao = 0;
-  
-// Atualiza saldo na tela
-function atualizarSaldo() {
-  document.getElementById("saldo").innerText = saldo.toFixed(2);
+
+// ✅ Função para iniciar investimento com lucro real salvo no banco Neon function investirPacote(valor, lucroDiario) { const email = netlifyIdentity.currentUser()?.email; if (!email) return alert("Usuário não autenticado");
+
+if (valor < 1) return alert("Valor inválido para investir");
+
+fetch("/.netlify/functions/investirPacote", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, valor, lucroDiario }) }) .then(res => res.json()) .then(data => { if (data.sucesso) { alert("Investimento realizado com sucesso! Lucro em 24h."); atualizarSaldo(); carregarHistorico(); } else { alert(data.mensagem || "Erro ao investir"); } }) .catch(err => { console.error(err); alert("Erro ao processar investimento"); }); }
+
+// ✅ Libera o lucro se 24h tiverem passado desde o último investimento function liberarLucroDiario() { const email = netlifyIdentity.currentUser()?.email; if (!email) return alert("Usuário não autenticado");
+
+fetch("/.netlify/functions/liberarLucro", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) }) .then(res => res.json()) .then(data => { if (data.sucesso) { alert(Lucro de $${data.valor.toFixed(2)} liberado com sucesso!); atualizarSaldo(); } else { alert(data.mensagem || "Lucro ainda não disponível"); } }) .catch(err => { console.error(err); alert("Erro ao liberar lucro"); }); }
+
+// ✅ Backend: investirPacote.js (/.netlify/functions/investirPacote.js) const { Client } = require('pg');
+
+exports.handler = async (event) => { const { email, valor, lucroDiario } = JSON.parse(event.body);
+
+const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+
+try { await client.connect();
+
+const userRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
+if (userRes.rows.length === 0) throw new Error("Usuário não encontrado");
+
+const saldoAtual = parseFloat(userRes.rows[0].saldo);
+if (saldoAtual < valor) throw new Error("Saldo insuficiente");
+
+// Desconta e grava investimento
+await client.query("UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2", [valor, email]);
+
+await client.query(
+  `INSERT INTO investimentos (email, valor, lucro_diario, data_investimento, proximo_pagamento)
+   VALUES ($1, $2, $3, NOW(), NOW() + interval '24 hours')`,
+  [email, valor, lucroDiario]
+);
+
+await client.query(
+  `INSERT INTO transacoes (email, tipo, valor, data) VALUES ($1, 'Investimento', $2, NOW())`,
+  [email, valor]
+);
+
+await client.end();
+
+return { statusCode: 200, body: JSON.stringify({ sucesso: true }) };
+
+} catch (err) { console.error("Erro ao investir:", err); await client.end(); return { statusCode: 500, body: JSON.stringify({ sucesso: false, mensagem: err.message }) }; } };
+
+// ✅ Backend: liberarLucro.js (/.netlify/functions/liberarLucro.js) const { Client } = require("pg");
+
+exports.handler = async (event) => { const { email } = JSON.parse(event.body); const client = new Client({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false }, });
+
+try { await client.connect(); const investimentos = await client.query( SELECT id, lucro_diario, proximo_pagamento FROM investimentos WHERE email = $1 AND NOW() >= proximo_pagamento, [email] );
+
+if (investimentos.rows.length === 0) {
+  await client.end();
+  return { statusCode: 200, body: JSON.stringify({ sucesso: false, mensagem: "Nenhum lucro disponível." }) };
 }
 
-// Função chamada quando o usuário investe em um pacote
-function investir(valor, lucroDiario) {
-  if (saldo >= valor) {
-    saldo -= valor;
-    rendimento += lucroDiario;
-    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000;
-    atualizarSaldo();
-    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
+let totalLucro = 0;
+for (let inv of investimentos.rows) {
+  totalLucro += parseFloat(inv.lucro_diario);
+  await client.query(
+    `UPDATE investimentos SET proximo_pagamento = NOW() + interval '24 hours' WHERE id = $1`,
+    [inv.id]
+  );
+}
 
+await client.query("UPDATE usuarios SET saldo = saldo + $1 WHERE email = $2", [totalLucro, email]);
+await client.query(
+  `INSERT INTO transacoes (email, tipo, valor, data) VALUES ($1, 'Lucro', $2, NOW())`,
+  [email, totalLucro]
+);
+
+await client.end();
+return { statusCode: 200, body: JSON.stringify({ sucesso: true, valor: totalLucro }) };
+
+} catch (error) { console.error("Erro ao liberar lucro:", error); await client.end(); return { statusCode: 500, body: JSON.stringify({ sucesso: false, mensagem: error.message }) }; } };
+
+
+      
     // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
       method: 'POST',
@@ -473,17 +531,7 @@ function investir(valor, lucroDiario) {
   } else {
     alert("Saldo insuficiente");
   }
-}
-
-// Checa a cada minuto se já é hora de pagar rendimento
-setInterval(() => {
-  if (proximoPagamento && Date.now() >= proximoPagamento) {
-    saldo += rendimento; // adiciona o lucro diário
-    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; // agenda a próxima
-    atualizarSaldo();
-    alert("Lucro diário creditado!");
-  }
-}, 60000); // verifica a cada 1 minuto
+ }
 
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
