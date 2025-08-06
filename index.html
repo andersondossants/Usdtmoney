@@ -281,6 +281,17 @@
     <div class="close-btn" onclick="fecharModal()">Fechar</div>
   </div>
   </div>
+
+  <!-- Modal de Pacote Comprado -->
+<div id="modalPacote" class="modal-container" style="display: none;">
+  <div class="modal-content">
+    <h2 style="text-align: center; margin-bottom: 15px;">🎁 Detalhes do Pacote</h2>
+    <div id="conteudoPacote" style="text-align: center;">
+      <!-- Conteúdo dinâmico do pacote será exibido aqui -->
+    </div>
+    <button onclick="fecharModalPacote()" style="margin-top: 20px;" class="botao3D">Fechar</button>
+  </div>
+</div>
   
 <!-- Modal do histórico com visual 3D -->
 <div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999; animation:fadeIn 0.4s;">
@@ -562,7 +573,7 @@ function abrirSuporte() {
 function verPacote() {
   const conteudo = document.getElementById("conteudoPacote");
 
-  if (rendimento > 0) {
+  if (typeof rendimento !== "undefined" && rendimento > 0) {
     conteudo.innerHTML = `
       <p>🎉 Você comprou um pacote ativo!</p>
       <p><strong>💰 Rendimento diário:</strong> ${rendimento.toFixed(2)} USDT</p>
@@ -578,7 +589,7 @@ function verPacote() {
 
 function fecharModalPacote() {
   document.getElementById("modalPacote").style.display = "none";   
-}
+ }
   
     function abrirComissao() {
   const painel = document.getElementById("painelComissao");
