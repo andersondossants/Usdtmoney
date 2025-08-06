@@ -414,27 +414,27 @@
 </div> 
 
     <script>
-    let saldo = 3.00;
-let rendimento = 0; // lucro diário total
-let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms)
-let indicados = [];
-let comissao = 0;
+  
   
 // Atualiza saldo na tela
 function atualizarSaldo() {
   document.getElementById("saldo").innerText = saldo.toFixed(2);
 }
 
-// Função chamada quando o usuário investe em um pacote
+      // Função chamada quando o usuário investe em um pacote
 function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
-    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000;
+    proximoPagamento = Date.now() + 60 * 1000; // 1 minuto
     atualizarSaldo();
-    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 1 minuto.");
+  } else {
+    alert("Saldo insuficiente para investir.");
+  }
+}
 
-    // ✅ Salvar transação no histórico
+      // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
