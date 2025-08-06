@@ -647,34 +647,7 @@ function carregarPacotesComprados() {
       conteudo.innerHTML = "<p style='text-align:center;'>❌ Erro ao carregar os pacotes.</p>";
     });
           }
-      function liberarLucro() {
-  const email = netlifyIdentity.currentUser()?.email;
-  if (!email) {
-    alert("Usuário não autenticado.");
-    return;
-  }
-
-  fetch('/.netlify/functions/liberarLucro', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.sucesso) {
-      alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
-      saldo += data.valor;
-      atualizarSaldo(); // atualiza saldo na tela
-    } else {
-      alert(data.mensagem || "⚠️ Lucro ainda não disponível.");
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Erro ao liberar lucro.");
-  });
-}
-  
+      
     function abrirComissao() {
   const painel = document.getElementById("painelComissao");
   painel.style.display = "flex";
@@ -738,6 +711,33 @@ function carregarPacotesComprados() {
       alert("Erro ao processar saque da comissão.");
     });
 }
+      function liberarLucro() {
+  const email = netlifyIdentity.currentUser()?.email;
+  if (!email) {
+    alert("Usuário não autenticado.");
+    return;
+  }
+
+  fetch('/.netlify/functions/liberarLucro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.sucesso) {
+      alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
+      saldo += data.valor;
+      atualizarSaldo(); // atualiza saldo na tela
+    } else {
+      alert(data.mensagem || "⚠️ Lucro ainda não disponível.");
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao liberar lucro.");
+  });
+    }
       
       // Captura ?ref= do link
 let referencia = null;
