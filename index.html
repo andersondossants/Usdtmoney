@@ -584,25 +584,54 @@ function abrirSuporte() {
 }
 
 function verPacote() {
-  const conteudo = document.getElementById("conteudoPacote");
-
-  if (typeof rendimento !== "undefined" && rendimento > 0) {
-    conteudo.innerHTML = `
-      <p>🎉 Você comprou um pacote ativo!</p>
-      <p><strong>💰 Rendimento diário:</strong> ${rendimento.toFixed(2)} USDT</p>
-    `;
-  } else {
-    conteudo.innerHTML = `
-      <p>⚠️ Você ainda não comprou nenhum pacote.</p>
-    `;
-  }
-
   document.getElementById("modalPacote").style.display = "flex";
+  carregarPacotesComprados();
 }
 
 function fecharModalPacote() {
   document.getElementById("modalPacote").style.display = "none";   
- }
+}
+
+function carregarPacotesComprados() {
+  const conteudo = document.getElementById("conteudoPacote");
+  conteudo.innerHTML = "<p style='text-align:center;'>🔄 Carregando pacotes comprados...</p>";
+
+  const email = netlifyIdentity.currentUser()?.email;
+  if (!email) {
+    conteudo.innerHTML = "<p style='text-align:center;'>⚠️ Usuário não identificado.</p>";
+    return;
+  }
+
+  fetch("/.netlify/functions/historicoPacotes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  })
+    .then(res => res.json())
+    .then(pacotes => {
+      if (!pacotes || pacotes.length === 0) {
+        conteudo.innerHTML = "<p style='text-align:center;'>⚠️ Você ainda não comprou nenhum pacote.</p>";
+        return;
+      }
+
+      conteudo.innerHTML = "";
+      pacotes.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "card3D";
+        div.innerHTML = `
+          <p><strong>📦 Pacote:</strong> ${p.nome}</p>
+          <p><strong>💰 Valor:</strong> $${parseFloat(p.valor).toFixed(2)}</p>
+          <p><strong>💸 Rendimento diário:</strong> $${parseFloat(p.rendimento).toFixed(2)}</p>
+          <p><strong>📅 Data da compra:</strong> ${new Date(p.data).toLocaleString()}</p>
+        `;
+        conteudo.appendChild(div);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      conteudo.innerHTML = "<p style='text-align:center;'>❌ Erro ao carregar os pacotes.</p>";
+    });
+          }
   
     function abrirComissao() {
   const painel = document.getElementById("painelComissao");
