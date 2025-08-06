@@ -315,21 +315,7 @@
   transform: scale(1.03);
   }
 </style>
-  <!-- Modal de Pacote Comprado -->
-<div id="modalPacote" class="modal-container">
-  <div class="modal-content">
-    <h2 style="text-align: center; margin-bottom: 15px;">🎁 Detalhes do Pacote</h2>
-    <div id="conteudoPacote" style="text-align: center;">
-      <!-- Conteúdo dinâmico do pacote será exibido aqui -->
-      <!-- Botão Pacote Comprado com estilo do botão do modal -->
-<button onclick="registrarPacote()" style="padding: 12px 24px; background: #0ea5e9; color: white; border: none; border-radius: 12px; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto;">
-  ✅ Pacote Comprado
-</button>
-    </div>
-    <button onclick="fecharModalPacote()" style="margin-top: 20px;" class="botao3D">Fechar</button>
-  </div>
-</div>
-
+  
   <!-- Painel de Comissão -->
 <div id="painelComissao" style="
   display:none;
@@ -781,5 +767,15 @@ fetch('/.netlify/functions/salvarTransacao', {
   }
 }
 </script>
+  <!-- Modal de Pacote Comprado -->
+<div id="modalPacote" class="modal-container">
+  <div class="modal-content">
+    <h2 style="margin-bottom: 15px;">🎁 Detalhes do Pacote</h2>
+    <div id="conteudoPacote">
+      <!-- Conteúdo dinâmico será exibido aqui -->
+    </div>
+    <button onclick="fecharModalPacote()" class="botao3D" style="margin-top: 20px;">Fechar</button>
+  </div>
+</div>
 </body>
                                                         </html>
