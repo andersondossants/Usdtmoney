@@ -1,49 +1,36 @@
-const { Client } = require("pg");
+// salvarInvestimento.js
 
-exports.handler = async function(event) {
-  const { email, valor, lucro_diario } = JSON.parse(event.body || "{}");
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
 
-  if (!email || !valor || !lucro_diario) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ sucesso: false, mensagem: "Dados incompletos" })
-    };
+// Função para somar 1 minuto ao horário atual
+function adicionarMinuto(data) {
+  return new Date(data.getTime() + 1 * 60 * 1000); // 1 minuto em milissegundos
+}
+
+router.post('/', async (req, res) => {
+  const { email, valor } = req.body;
+
+  if (!email || !valor) {
+    return res.status(400).json({ mensagem: 'Email e valor são obrigatórios.' });
   }
 
-  // Define o próximo pagamento para 1 minuto no futuro
-  const proximo_pagamento = new Date(Date.now() + 1 * 60 * 1000).toISOString();
-
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
-  });
+  const lucroPorMinuto = valor * 0.01; // 1% ao minuto
+  const agora = new Date();
+  const proximoPagamento = adicionarMinuto(agora); // Próximo lucro em 1 minuto
 
   try {
-    await client.connect();
+    const resultado = await pool.query(
+      'INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento) VALUES ($1, $2, $3, $4) RETURNING *',
+      [email, valor, lucroPorMinuto, proximoPagamento]
+    );
 
-    // 1. Salva o investimento
-    await client.query(`
-      INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
-      VALUES ($1, $2, $3, $4)
-    `, [email, valor, lucro_diario, proximo_pagamento]);
-
-    // 2. Registra a transação no histórico
-    await client.query(`
-      INSERT INTO transacoes (email, tipo, valor, data)
-      VALUES ($1, $2, $3, NOW())
-    `, [email, 'Investimento', valor]);
-
-    await client.end();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ sucesso: true })
-    };
-  } catch (err) {
-    console.error("Erro ao salvar investimento:", err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ sucesso: false, mensagem: "Erro no servidor" })
-    };
+    res.status(201).json(resultado.rows[0]);
+  } catch (error) {
+    console.error('Erro ao salvar investimento:', error);
+    res.status(500).json({ mensagem: 'Erro interno ao salvar o investimento.' });
   }
-};
+});
+
+module.exports = router;
