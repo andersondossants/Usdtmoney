@@ -415,96 +415,61 @@
 
     <script>
 
-      let saldo = 0;
-let rendimento = 0;
-let comissao = 0;
+let saldo = 3.00;
+let rendimento = 0; 
+let proximoPagamento = 0;
 let indicados = [];
-let referencia = null;
-
+let comissao = 0;
+  
+// Atualiza saldo na tela
 function atualizarSaldo() {
-  const el = document.getElementById("saldo");
-  if (el) el.innerText = saldo.toFixed(2);
+  document.getElementById("saldo").innerText = saldo.toFixed(2);
 }
 
-// Investe em um pacote
+// Função chamada quando o usuário investe em um pacote
 function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
+
+    // Define a próxima data de pagamento (24h depois)
+    proximoPagamento = Date.now() + 1 * 60 * 1000;
+
     atualizarSaldo();
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 1 minuto.");
 
-    alert(`Investimento de $${valor} realizado!`);
-
-    // Salva transação
-    fetch('/.netlify/functions/salvarTransacao', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: netlifyIdentity.currentUser()?.email,
-        tipo: "Investimento",
-        valor,
-        data: new Date().toISOString()
-      })
-    });
-
-    // Envia comissão ao referenciador
-    if (referencia) {
-      fetch('/.netlify/functions/adicionarComissao', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          referenciador: referencia,
-          valorComissao: valor * 0.10
-        })
-      });
+    // Atualiza comissão se tiver indicados
+    if (indicados.length > 0) {
+      comissao += valor * 0.10;
+      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
     }
 
-    // Atualiza saldo no banco
+    // --- NOVO: Atualiza saldo no backend (Netlify Function) ---
     fetch('/.netlify/functions/updateSaldo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: netlifyIdentity.currentUser()?.email,
-        saldo
+        saldo: saldo
       })
-    });
+    }).catch(err => console.error("Erro ao atualizar saldo:", err));
 
   } else {
     alert("Saldo insuficiente");
   }
 }
 
-// Libera lucro via backend real
-function liberarLucroDiario() {
-  const email = netlifyIdentity.currentUser()?.email;
-  if (!email) return alert("Usuário não autenticado.");
+// Checa a cada minuto se já é hora de pagar rendimento
+setInterval(() => {
+  if (proximoPagamento && Date.now() >= proximoPagamento) {
+    saldo += rendimento; // adiciona o lucro diário
+    proximoPagamento = Date.now() + 1 * 60 * 1000; // agenda a próxima
+    atualizarSaldo();
+    alert("Lucro diário creditado!");
+  }
+}, 30000); // verifica a cada 30 segundos
 
-  fetch("/.netlify/functions/liberarLucro", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.sucesso) {
-      saldo += data.valor;
-      atualizarSaldo();
-      alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
-      carregarMeusPacotes?.(); // só se existir
-    } else {
-      alert(data.mensagem || "Lucro ainda não disponível.");
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    alert("Erro ao liberar lucro.");
-  });
-}
-
-window.onload = () => {
-  atualizarSaldo();
-};
-
+      
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
     function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
