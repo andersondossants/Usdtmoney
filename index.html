@@ -414,6 +414,16 @@
 </div> 
 
     <script>
+    let saldo = 3.00;
+let rendimento = 0; // lucro diário total
+let proximoPagamento = null; // timestamp da próxima liberação de lucro (em ms)
+let indicados = [];
+let comissao = 0;
+  
+// Atualiza saldo na tela
+function atualizarSaldo() {
+  document.getElementById("saldo").innerText = saldo.toFixed(2);
+}
 
 // ==== INVESTIMENTO E LUCRO DIÁRIO ====
 function investirPacote(valor, lucroDiario) {
@@ -466,8 +476,7 @@ function liberarLucroDiario() {
       console.error(err);
       alert("Erro ao liberar lucro");
     });
-  }
-      
+      }
     // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
       method: 'POST',
@@ -507,7 +516,17 @@ function liberarLucroDiario() {
   } else {
     alert("Saldo insuficiente");
   }
- }
+}
+
+// Checa a cada minuto se já é hora de pagar rendimento
+setInterval(() => {
+  if (proximoPagamento && Date.now() >= proximoPagamento) {
+    saldo += rendimento; // adiciona o lucro diário
+    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; // agenda a próxima
+    atualizarSaldo();
+    alert("Lucro diário creditado!");
+  }
+}, 60000); // verifica a cada 1 minuto
 
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
