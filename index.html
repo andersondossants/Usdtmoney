@@ -432,7 +432,7 @@ function investir(valor, lucroDiario) {
     saldo -= valor;
     rendimento += lucroDiario;
 
-    // Define a próxima data de pagamento (24h depois)
+    // Define a próxima data de pagamento (1 min depois)
     proximoPagamento = Date.now() + 1 * 60 * 1000;
 
     atualizarSaldo();
@@ -444,7 +444,7 @@ function investir(valor, lucroDiario) {
       document.getElementById("comissao-total").innerText = comissao.toFixed(2);
     }
 
-    // --- NOVO: Atualiza saldo no backend (Netlify Function) ---
+    // Atualiza saldo no backend
     fetch('/.netlify/functions/updateSaldo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -454,20 +454,23 @@ function investir(valor, lucroDiario) {
       })
     }).catch(err => console.error("Erro ao atualizar saldo:", err));
 
+    // 🟩 SALVA O INVESTIMENTO NO BANCO (DENTRO DA FUNÇÃO!)
+    const proximo = new Date(Date.now() + 1 * 60 * 1000).toISOString();
+    fetch('/.netlify/functions/salvarInvestimento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        valor,
+        lucro_diario: lucroDiario,
+        proximo_pagamento: proximo
+      })
+    }).catch(err => console.error("Erro ao salvar investimento:", err));
+
   } else {
     alert("Saldo insuficiente");
   }
-}
-
-// Checa a cada minuto se já é hora de pagar rendimento
-setInterval(() => {
-  if (proximoPagamento && Date.now() >= proximoPagamento) {
-    saldo += rendimento; // adiciona o lucro diário
-    proximoPagamento = Date.now() + 1 * 60 * 1000; // agenda a próxima
-    atualizarSaldo();
-    alert("Lucro diário creditado!");
-  }
-}, 30000); // verifica a cada 30 segundos
+      }
 
       
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
