@@ -1,7 +1,15 @@
-const { Client } = require('pg');
+const { Client } = require("pg");
 
-exports.handler = async (event) => {
-  const { email } = JSON.parse(event.body);
+exports.handler = async function(event) {
+  const { email } = JSON.parse(event.body || "{}");
+
+  if (!email) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ erro: "Email não fornecido" })
+    };
+  }
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -9,9 +17,8 @@ exports.handler = async (event) => {
 
   try {
     await client.connect();
-
     const resultado = await client.query(
-      "SELECT valor, lucro_diario, proximo_pagamento FROM investimentos WHERE email = $1 ORDER BY data_investimento DESC",
+      `SELECT valor, lucro_diario, proximo_pagamento FROM investimentos WHERE email = $1 ORDER BY id DESC`,
       [email]
     );
 
@@ -21,12 +28,11 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ pacotes: resultado.rows })
     };
-  } catch (error) {
-    console.error("Erro ao carregar pacotes:", error);
-    await client.end();
+  } catch (erro) {
+    console.error("Erro ao carregar pacotes:", erro);
     return {
       statusCode: 500,
-      body: JSON.stringify({ pacotes: [] })
+      body: JSON.stringify({ erro: "Erro ao carregar pacotes" })
     };
   }
 };
