@@ -419,29 +419,27 @@ let rendimento = 0;
 let proximoPagamento = Date.now() + 1 * 60 * 1000;
 let indicados = [];
 let comissao = 0;
-  
-// Atualiza saldo na tela
+let referencia = null; // Evita erro ReferenceError
+
 function atualizarSaldo() {
-  document.getElementById("saldo").innerText = saldo.toFixed(2);
+  const el = document.getElementById("saldo");
+  if (el) el.innerText = saldo.toFixed(2); // Protege contra DOM não carregado
 }
-// Função chamada quando o usuário investe em um pacote
+
 function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
-
-    // Define a próxima data de pagamento (24h depois)
     proximoPagamento = Date.now() + 1 * 60 * 1000;
     atualizarSaldo();
-    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
 
-    // Atualiza comissão se tiver indicados
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 1 minuto.");
+
     if (indicados.length > 0) {
       comissao += valor * 0.10;
       document.getElementById("comissao-total").innerText = comissao.toFixed(2);
-      }
+    }
 
-    // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -453,7 +451,6 @@ function investir(valor, lucroDiario) {
       })
     });
 
-    // ✅ Envia comissão para o referenciador, se houver
     if (referencia) {
       fetch('/.netlify/functions/adicionarComissao', {
         method: 'POST',
@@ -467,7 +464,6 @@ function investir(valor, lucroDiario) {
       });
     }
 
-    // ✅ Atualiza saldo no backend
     fetch('/.netlify/functions/updateSaldo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -480,6 +476,7 @@ function investir(valor, lucroDiario) {
   } else {
     alert("Saldo insuficiente");
   }
+}
 
 function liberarLucroDiario() {
   const email = netlifyIdentity.currentUser()?.email;
@@ -493,8 +490,9 @@ function liberarLucroDiario() {
   .then(res => res.json())
   .then(data => {
     if (data.sucesso) {
-      alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
+      saldo += data.valor; // Atualiza localmente o saldo
       atualizarSaldo();
+      alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
       carregarMeusPacotes(); // Atualiza lista também
     } else {
       alert(data.mensagem || "Lucro ainda não disponível.");
@@ -504,7 +502,11 @@ function liberarLucroDiario() {
     console.error(err);
     alert("Erro ao liberar lucro.");
   });
-      }
+}
+
+window.onload = () => {
+  atualizarSaldo();
+};
 
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
