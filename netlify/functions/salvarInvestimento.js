@@ -1,9 +1,9 @@
 const { Client } = require("pg");
 
 exports.handler = async function(event) {
-  const { email, valor } = JSON.parse(event.body || "{}");
+  const { email, valor, lucro_diario } = JSON.parse(event.body || "{}");
 
-  if (!email || !valor) {
+  if (!email || !valor || lucro_diario == null) {
     return {
       statusCode: 400,
       body: JSON.stringify({ sucesso: false, mensagem: "Dados incompletos" })
@@ -15,11 +15,8 @@ exports.handler = async function(event) {
     ssl: { rejectUnauthorized: false }
   });
 
-  // 💸 Lucro por minuto (1% por minuto)
-  const lucro_por_minuto = valor * 0.01;
-
-  // ⏰ Próximo pagamento em 1 minuto
-  const proximo_pagamento = new Date(Date.now() + 1 * 60 * 1000).toISOString();
+  // ⏰ Próximo pagamento em 24 horas
+  const proximo_pagamento = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
   try {
     await client.connect();
@@ -28,7 +25,7 @@ exports.handler = async function(event) {
     await client.query(`
       INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
       VALUES ($1, $2, $3, $4)
-    `, [email, valor, lucro_por_minuto, proximo_pagamento]);
+    `, [email, valor, lucro_diario, proximo_pagamento]);
 
     // 2. Registra a transação no histórico
     await client.query(`
