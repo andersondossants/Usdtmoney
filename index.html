@@ -480,17 +480,31 @@ function investir(valor, lucroDiario) {
   } else {
     alert("Saldo insuficiente");
   }
-}
 
-// Checa a cada minuto se já é hora de pagar rendimento
-setInterval(() => {
-  if (proximoPagamento && Date.now() >= proximoPagamento) {
-    saldo += rendimento; // adiciona o lucro diário
-    proximoPagamento = Date.now() + 1 * 60 * 1000; // agenda a próxima
-    atualizarSaldo();
-    alert("Lucro diário creditado!");
-  }
-}, 60000); // verifica a cada 1 minuto
+function liberarLucroDiario() {
+  const email = netlifyIdentity.currentUser()?.email;
+  if (!email) return alert("Usuário não autenticado.");
+
+  fetch("/.netlify/functions/liberarLucro", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.sucesso) {
+      alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
+      atualizarSaldo();
+      carregarMeusPacotes(); // Atualiza lista também
+    } else {
+      alert(data.mensagem || "Lucro ainda não disponível.");
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Erro ao liberar lucro.");
+  });
+      }
 
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
