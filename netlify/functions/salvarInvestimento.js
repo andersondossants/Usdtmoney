@@ -1,14 +1,17 @@
 const { Client } = require("pg");
 
 exports.handler = async function(event) {
-  const { email, valor, lucro_diario, proximo_pagamento } = JSON.parse(event.body || "{}");
+  const { email, valor, lucro_diario } = JSON.parse(event.body || "{}");
 
-  if (!email || !valor || !lucro_diario || !proximo_pagamento) {
+  if (!email || !valor || !lucro_diario) {
     return {
       statusCode: 400,
       body: JSON.stringify({ sucesso: false, mensagem: "Dados incompletos" })
     };
   }
+
+  // Define o próximo pagamento para 1 minuto no futuro
+  const proximo_pagamento = new Date(Date.now() + 1 * 60 * 1000).toISOString();
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
