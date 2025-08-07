@@ -609,13 +609,15 @@ function carregarPacotesComprados() {
     return;
   }
 
-  fetch("/.netlify/functions/historicoPacotes", {
+  fetch("/.netlify/functions/carregarPacotes", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email })
   })
     .then(res => res.json())
-    .then(pacotes => {
+    .then(data => {
+      const pacotes = data.pacotes;
+
       if (!pacotes || pacotes.length === 0) {
         conteudo.innerHTML = "<p style='text-align:center;'>⚠️ Você ainda não comprou nenhum pacote.</p>";
         return;
@@ -626,10 +628,9 @@ function carregarPacotesComprados() {
         const div = document.createElement("div");
         div.className = "card3D";
         div.innerHTML = `
-          <p><strong>📦 Pacote:</strong> ${p.nome}</p>
-          <p><strong>💰 Valor:</strong> $${parseFloat(p.valor).toFixed(2)}</p>
-          <p><strong>💸 Rendimento diário:</strong> $${parseFloat(p.rendimento).toFixed(2)}</p>
-          <p><strong>📅 Data da compra:</strong> ${new Date(p.data).toLocaleString()}</p>
+          <p><strong>📦 Pacote:</strong> $${parseFloat(p.valor).toFixed(2)}</p>
+          <p><strong>💸 Lucro diário:</strong> $${parseFloat(p.lucro_diario).toFixed(2)}</p>
+          <p><strong>📅 Próximo pagamento:</strong> ${new Date(p.proximo_pagamento).toLocaleString()}</p>
         `;
         conteudo.appendChild(div);
       });
@@ -638,7 +639,7 @@ function carregarPacotesComprados() {
       console.error(err);
       conteudo.innerHTML = "<p style='text-align:center;'>❌ Erro ao carregar os pacotes.</p>";
     });
-          }
+      }
   
     function abrirComissao() {
   const painel = document.getElementById("painelComissao");
