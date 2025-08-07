@@ -29,12 +29,13 @@ exports.handler = async (event) => {
       totalLucro += parseFloat(inv.lucro_diario);
 
       await client.query(
-        "UPDATE investimentos SET proximo_pagamento = NOW() + interval '24 hours' WHERE id = $1",
+        "UPDATE investimentos SET proximo_pagamento = NOW() + interval '1 minute' WHERE id = $1",
         [inv.id]
       );
     }
 
     await client.query("UPDATE usuarios SET saldo = saldo + $1 WHERE email = $2", [totalLucro, email]);
+
     await client.query(
       "INSERT INTO transacoes (email, tipo, valor, data) VALUES ($1, 'Lucro', $2, NOW())",
       [email, totalLucro]
