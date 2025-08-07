@@ -414,7 +414,11 @@
 </div> 
 
     <script>
-    
+    let saldo = 0;
+let rendimento = 0;
+let proximoPagamento = Date.now() + 1 * 60 * 1000;
+let indicados = [];
+let comissao = 0;
   
 // Atualiza saldo na tela
 function atualizarSaldo() {
@@ -427,14 +431,13 @@ function investir(valor, lucroDiario) {
     rendimento += lucroDiario;
 
     // Define a próxima data de pagamento (24h depois)
-    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000;
-
+    proximoPagamento = Date.now() + 1 * 60 * 1000;
     atualizarSaldo();
     alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
 
     // Atualiza comissão se tiver indicados
     if (indicados.length > 0) {
-      comissao += valor * 0.30;
+      comissao += valor * 0.10;
       document.getElementById("comissao-total").innerText = comissao.toFixed(2);
       }
 
@@ -483,7 +486,7 @@ function investir(valor, lucroDiario) {
 setInterval(() => {
   if (proximoPagamento && Date.now() >= proximoPagamento) {
     saldo += rendimento; // adiciona o lucro diário
-    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000; // agenda a próxima
+    proximoPagamento = Date.now() + 1 * 60 * 1000; // agenda a próxima
     atualizarSaldo();
     alert("Lucro diário creditado!");
   }
