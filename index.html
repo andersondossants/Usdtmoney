@@ -424,7 +424,6 @@ let comissao = 0;
 function atualizarSaldo() {
   document.getElementById("saldo").innerText = saldo.toFixed(2);
 }
-
 // ==== INVESTIMENTO E LUCRO DIÁRIO ====
 function investirPacote(valor, lucroDiario) {
   const email = netlifyIdentity.currentUser()?.email;
@@ -476,6 +475,7 @@ function liberarLucroDiario() {
       alert("Erro ao liberar lucro");
     });
       }
+
     // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
       method: 'POST',
