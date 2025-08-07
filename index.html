@@ -65,15 +65,18 @@
   box-shadow: 0 4px 8px rgba(0,0,0,0.4);
   transform: translateX(60px); /* Aumente esse valor se quiser mais ainda */
     }
-    .modal-content {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  max-width: 400px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
+    .modal-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 30%;
+  height: 20%;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.4s;
     }
     .dropdown-content button {
       width: 100%; padding: 10px; text-align: left; background: none;
