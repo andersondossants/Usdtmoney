@@ -18,10 +18,17 @@ exports.handler = async function(event) {
   try {
     await client.connect();
 
+    // 1. Salva o investimento
     await client.query(`
       INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
       VALUES ($1, $2, $3, $4)
     `, [email, valor, lucro_diario, proximo_pagamento]);
+
+    // 2. Registra a transação no histórico
+    await client.query(`
+      INSERT INTO transacoes (email, tipo, valor, data)
+      VALUES ($1, $2, $3, NOW())
+    `, [email, 'Investimento', valor]);
 
     await client.end();
 
