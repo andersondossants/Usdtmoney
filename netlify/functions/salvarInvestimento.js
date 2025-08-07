@@ -1,36 +1,52 @@
-// salvarInvestimento.js
+const { Client } = require("pg");
 
-const express = require('express');
-const router = express.Router();
-const pool = require('../db');
-
-// Função para somar 1 minuto ao horário atual
-function adicionarMinuto(data) {
-  return new Date(data.getTime() + 1 * 60 * 1000); // 1 minuto em milissegundos
-}
-
-router.post('/', async (req, res) => {
-  const { email, valor } = req.body;
+exports.handler = async function(event) {
+  const { email, valor } = JSON.parse(event.body || "{}");
 
   if (!email || !valor) {
-    return res.status(400).json({ mensagem: 'Email e valor são obrigatórios.' });
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ sucesso: false, mensagem: "Dados incompletos" })
+    };
   }
 
-  const lucroPorMinuto = valor * 0.01; // 1% ao minuto
-  const agora = new Date();
-  const proximoPagamento = adicionarMinuto(agora); // Próximo lucro em 1 minuto
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+  });
+
+  // 💸 Lucro por minuto (1% por minuto)
+  const lucro_por_minuto = valor * 0.01;
+
+  // ⏰ Próximo pagamento em 1 minuto
+  const proximo_pagamento = new Date(Date.now() + 1 * 60 * 1000).toISOString();
 
   try {
-    const resultado = await pool.query(
-      'INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento) VALUES ($1, $2, $3, $4) RETURNING *',
-      [email, valor, lucroPorMinuto, proximoPagamento]
-    );
+    await client.connect();
 
-    res.status(201).json(resultado.rows[0]);
-  } catch (error) {
-    console.error('Erro ao salvar investimento:', error);
-    res.status(500).json({ mensagem: 'Erro interno ao salvar o investimento.' });
+    // 1. Salva o investimento
+    await client.query(`
+      INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
+      VALUES ($1, $2, $3, $4)
+    `, [email, valor, lucro_por_minuto, proximo_pagamento]);
+
+    // 2. Registra a transação no histórico
+    await client.query(`
+      INSERT INTO transacoes (email, tipo, valor, data)
+      VALUES ($1, $2, $3, NOW())
+    `, [email, 'Investimento', valor]);
+
+    await client.end();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ sucesso: true })
+    };
+  } catch (err) {
+    console.error("Erro ao salvar investimento:", err);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ sucesso: false, mensagem: "Erro no servidor" })
+    };
   }
-});
-
-module.exports = router;
+};
