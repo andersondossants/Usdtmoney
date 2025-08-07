@@ -415,7 +415,58 @@
 
     <script>
 
+// ==== INVESTIMENTO E LUCRO DIÁRIO ====
+function investirPacote(valor, lucroDiario) {
+  const email = netlifyIdentity.currentUser()?.email;
+  if (!email) return alert("Usuário não autenticado");
 
+  if (valor < 1) return alert("Valor inválido para investir");
+
+  fetch("/.netlify/functions/investirPacote", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, valor, lucroDiario })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.sucesso) {
+        alert("✅ Investimento realizado com sucesso! Lucro em 24h.");
+        atualizarSaldo();
+        carregarHistorico();
+      } else {
+        alert(data.mensagem || "Erro ao investir");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao processar investimento");
+    });
+}
+
+function liberarLucroDiario() {
+  const email = netlifyIdentity.currentUser()?.email;
+  if (!email) return alert("Usuário não autenticado");
+
+  fetch("/.netlify/functions/liberarLucro", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.sucesso) {
+        alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
+        atualizarSaldo();
+        carregarHistorico();
+      } else {
+        alert(data.mensagem || "Lucro ainda não disponível");
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Erro ao liberar lucro");
+    });
+  }
       
     // ✅ Salvar transação no histórico
     fetch('/.netlify/functions/salvarTransacao', {
