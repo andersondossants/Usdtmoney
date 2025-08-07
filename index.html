@@ -424,56 +424,22 @@ let comissao = 0;
 function atualizarSaldo() {
   document.getElementById("saldo").innerText = saldo.toFixed(2);
 }
-// ==== INVESTIMENTO E LUCRO DIÁRIO ====
-function investirPacote(valor, lucroDiario) {
-  const email = netlifyIdentity.currentUser()?.email;
-  if (!email) return alert("Usuário não autenticado");
+// Função chamada quando o usuário investe em um pacote
+function investir(valor, lucroDiario) {
+  if (saldo >= valor) {
+    saldo -= valor;
+    rendimento += lucroDiario;
 
-  if (valor < 1) return alert("Valor inválido para investir");
+    // Define a próxima data de pagamento (24h depois)
+    proximoPagamento = Date.now() + 24 * 60 * 60 * 1000;
 
-  fetch("/.netlify/functions/investirPacote", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, valor, lucroDiario })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.sucesso) {
-        alert("✅ Investimento realizado com sucesso! Lucro em 24h.");
-        atualizarSaldo();
-        carregarHistorico();
-      } else {
-        alert(data.mensagem || "Erro ao investir");
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Erro ao processar investimento");
-    });
+    atualizarSaldo();
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24h.");
 
-function liberarLucroDiario() {
-  const email = netlifyIdentity.currentUser()?.email;
-  if (!email) return alert("Usuário não autenticado");
-
-  fetch("/.netlify/functions/liberarLucro", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email })
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.sucesso) {
-        alert(`💸 Lucro de $${data.valor.toFixed(2)} liberado com sucesso!`);
-        atualizarSaldo();
-        carregarHistorico();
-      } else {
-        alert(data.mensagem || "Lucro ainda não disponível");
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      alert("Erro ao liberar lucro");
-    });
+    // Atualiza comissão se tiver indicados
+    if (indicados.length > 0) {
+      comissao += valor * 0.30;
+      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
       }
 
     // ✅ Salvar transação no histórico
