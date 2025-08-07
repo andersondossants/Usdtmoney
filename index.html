@@ -458,15 +458,18 @@ function atualizarSaldo() {
 
 // Função chamada quando o usuário investe em um pacote
 function investir(valor, lucroDiario) {
+  const usuario = netlifyIdentity.currentUser();
+  if (!usuario) {
+    alert("Usuário não identificado!");
+    return;
+  }
+
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
 
-    // Define a próxima data de pagamento (1 min depois)
-    proximoPagamento = Date.now() + 1 * 60 * 1000;
-
     atualizarSaldo();
-    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 1 minuto.");
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24 horas.");
 
     // Atualiza comissão se tiver indicados
     if (indicados.length > 0) {
@@ -479,21 +482,19 @@ function investir(valor, lucroDiario) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: netlifyIdentity.currentUser()?.email,
+        email: usuario.email,
         saldo: saldo
       })
     }).catch(err => console.error("Erro ao atualizar saldo:", err));
 
-    // 🟩 SALVA O INVESTIMENTO NO BANCO (DENTRO DA FUNÇÃO!)
-    const proximo = new Date(Date.now() + 1 * 60 * 1000).toISOString();
+    // Salva o investimento no backend
     fetch('/.netlify/functions/salvarInvestimento', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email: netlifyIdentity.currentUser()?.email,
-        valor,
-        lucro_diario: lucroDiario,
-        proximo_pagamento: proximo
+        email: usuario.email,
+        valor: valor,
+        lucro_diario: lucroDiario // nome do campo deve bater com o backend
       })
     }).catch(err => console.error("Erro ao salvar investimento:", err));
 
