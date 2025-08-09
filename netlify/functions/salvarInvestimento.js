@@ -1,12 +1,30 @@
 const { Client } = require("pg");
 
 exports.handler = async function(event) {
-  const { email, valor, lucro_diario } = JSON.parse(event.body || "{}");
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Método não permitido' };
+  }
 
-  if (!email || !valor || lucro_diario == null) {
+  console.log('raw body:', event.body);
+  const payload = JSON.parse(event.body || "{}");
+  let { email, valor, lucro_diario } = payload;
+
+  // Normalizar strings com vírgula para ponto
+  if (typeof valor === 'string') valor = valor.replace(',', '.').trim();
+  if (typeof lucro_diario === 'string') lucro_diario = lucro_diario.replace(',', '.').trim();
+
+  const valorNum = Number(valor);
+  const lucroNum = Number(lucro_diario);
+
+  // Validações claras
+  if (!email || !isFinite(valorNum) || !isFinite(lucroNum)) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ sucesso: false, mensagem: "Dados incompletos" })
+      body: JSON.stringify({
+        sucesso: false,
+        mensagem: "Dados inválidos. Envie email, valor e lucro_diario numéricos (use ponto como separador decimal).",
+        received: { email, valor, lucro_diario }
+      })
     };
   }
 
@@ -15,35 +33,37 @@ exports.handler = async function(event) {
     ssl: { rejectUnauthorized: false }
   });
 
-  // ⏰ Próximo pagamento em 24 horas
-  const proximo_pagamento = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
   try {
     await client.connect();
 
-    // 1. Salva o investimento
-    await client.query(`
-      INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
-      VALUES ($1, $2, $3, $4)
-    `, [email, valor, lucro_diario, proximo_pagamento]);
+    // Inserir usando NOW() + interval '5 minutes' (evita inconsistências de timezone)
+    const insert = await client.query(
+      `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
+       VALUES ($1, $2, $3, NOW() + interval '5 minutes')
+       RETURNING id, email, valor, lucro_diario, proximo_pagamento`,
+      [email, valorNum, lucroNum]
+    );
 
-    // 2. Registra a transação no histórico
-    await client.query(`
-      INSERT INTO transacoes (email, tipo, valor, data)
-      VALUES ($1, $2, $3, NOW())
-    `, [email, 'Investimento', valor]);
+    // Registrar transação
+    await client.query(
+      `INSERT INTO transacoes (email, tipo, valor, data)
+       VALUES ($1, 'Investimento', $2, NOW())`,
+      [email, valorNum]
+    );
 
     await client.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ sucesso: true })
+      body: JSON.stringify({ sucesso: true, investimento: insert.rows[0] })
     };
+
   } catch (err) {
     console.error("Erro ao salvar investimento:", err);
+    try { await client.end(); } catch(_) {}
     return {
       statusCode: 500,
-      body: JSON.stringify({ sucesso: false, mensagem: "Erro no servidor" })
+      body: JSON.stringify({ sucesso: false, mensagem: "Erro no servidor", detalhe: err.message })
     };
   }
 };
