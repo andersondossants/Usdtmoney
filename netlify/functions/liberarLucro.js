@@ -10,6 +10,7 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
+    // Buscar investimentos prontos para liberar lucro
     const investimentos = await client.query(
       "SELECT id, lucro_diario, proximo_pagamento FROM investimentos WHERE email = $1 AND NOW() >= proximo_pagamento",
       [email]
@@ -19,7 +20,7 @@ exports.handler = async (event) => {
       await client.end();
       return {
         statusCode: 200,
-        body: JSON.stringify({ sucesso: false, mensagem: "Nenhum lucro disponível." })
+        body: JSON.stringify({ sucesso: false, mensagem: "Nenhum lucro disponível agora." })
       };
     }
 
@@ -28,21 +29,31 @@ exports.handler = async (event) => {
     for (const inv of investimentos.rows) {
       totalLucro += parseFloat(inv.lucro_diario);
 
+      // Atualiza para liberar novamente em 5 minutos
       await client.query(
-        "UPDATE investimentos SET proximo_pagamento = NOW() + interval '1 minute' WHERE id = $1",
+        "UPDATE investimentos SET proximo_pagamento = NOW() + interval '5 minutes' WHERE id = $1",
         [inv.id]
       );
     }
 
-    await client.query("UPDATE usuarios SET saldo = saldo + $1 WHERE email = $2", [totalLucro, email]);
+    // Atualizar saldo do usuário
+    await client.query(
+      "UPDATE usuarios SET saldo = saldo + $1 WHERE email = $2",
+      [totalLucro, email]
+    );
 
+    // Registrar transação
     await client.query(
       "INSERT INTO transacoes (email, tipo, valor, data) VALUES ($1, 'Lucro', $2, NOW())",
       [email, totalLucro]
     );
 
     await client.end();
-    return { statusCode: 200, body: JSON.stringify({ sucesso: true, valor: totalLucro }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ sucesso: true, valor: totalLucro })
+    };
+
   } catch (error) {
     console.error("Erro ao liberar lucro:", error);
     await client.end();
