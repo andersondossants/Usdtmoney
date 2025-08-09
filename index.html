@@ -468,7 +468,7 @@ function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
-    const proximo_pagamento = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+    proximo_pagamento = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
     atualizarSaldo();
     alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 5 minutos.");
