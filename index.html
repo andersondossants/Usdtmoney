@@ -468,46 +468,24 @@ function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
-    
-    // Define a próxima data de pagamento (24h depois)
     proximoPagamento = Date.now() + 5 * 60 * 1000;
 
     atualizarSaldo();
     alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 5 minutos.");
 
-    // Atualiza comissão se tiver indicados
     if (indicados.length > 0) {
       comissao += valor * 0.10;
       document.getElementById("comissao-total").innerText = comissao.toFixed(2);
     }
 
-    // Atualiza saldo no backend
-    fetch('/.netlify/functions/liberarLucro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        saldo: saldo
-      })
-    }).catch(err => console.error("Erro ao atualizar saldo:", err));
-
-    // Atualiza saldo no backend
-fetch('/.netlify/functions/updateSaldo', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: usuario.email,
-    saldo: saldo
-  })
-})
-    // Salva o investimento no backend
+    // Salva o investimento no backend (responsável por criar o investimento e definir proximo_pagamento)
     fetch('/.netlify/functions/salvarInvestimento', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: usuario.email,
         valor: valor,
-        lucro_diario: lucroDiario // nome do campo deve bater com o backend
+        lucro_diario: lucroDiario
       })
     }).catch(err => console.error("Erro ao salvar investimento:", err));
 
