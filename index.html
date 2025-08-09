@@ -448,7 +448,7 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
 
 let saldo = 3.00;
 let rendimento = 0; 
-let proximoPagamento = Date.now() + 5 * 60 * 1000;
+let proximoPagamento = new Date(Date.now() + 5 * 60 * 1000;
 let indicados = [];
 let comissao = 0;
   
@@ -468,10 +468,10 @@ function investir(valor, lucroDiario) {
   if (saldo >= valor) {
     saldo -= valor;
     rendimento += lucroDiario;
-    proximoPagamento = Date.now() + 5 * 60 * 1000;
+    const proximo_pagamento = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
     atualizarSaldo();
-    alert("- Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 5 minutos.");
+    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 5 minutos.");
 
     if (indicados.length > 0) {
       comissao += valor * 0.10;
@@ -497,7 +497,7 @@ function investir(valor, lucroDiario) {
 setInterval(() => {
   if (proximoPagamento && Date.now() >= proximoPagamento) {
     saldo += rendimento; // adiciona o lucro diário
-    proximoPagamento = Date.now() + 5 * 60 * 1000; // agenda a próxima
+    const proximo_pagamento = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // agenda a próxima
     atualizarSaldo();
     alert("Lucro diário creditado!");
   }
