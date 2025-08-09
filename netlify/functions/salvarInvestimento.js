@@ -1,63 +1,69 @@
 const { Client } = require("pg");
 
-exports.handler = async (event) => {
-  const { email, valor, lucro_diario } = JSON.parse(event.body);
-  const valorNum = parseFloat(valor);
-  const lucroNum = parseFloat(lucro_diario);
+exports.handler = async function(event) {
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'MÃ©todo nÃ£o permitido' };
+  }
+
+  console.log('raw body:', event.body);
+  const payload = JSON.parse(event.body || "{}");
+  let { email, valor, lucro_diario } = payload;
+
+  // Normalizar strings com vÃ­rgula para ponto
+  if (typeof valor === 'string') valor = valor.replace(',', '.').trim();
+  if (typeof lucro_diario === 'string') lucro_diario = lucro_diario.replace(',', '.').trim();
+
+  const valorNum = Number(valor);
+  const lucroNum = Number(lucro_diario);
+
+  // ValidaÃ§Ãµes claras
+  if (!email || !isFinite(valorNum) || !isFinite(lucroNum)) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        sucesso: false,
+        mensagem: "Dados invÃ¡lidos. Envie email, valor e lucro_diario numÃ©ricos (use ponto como separador decimal).",
+        received: { email, valor, lucro_diario }
+      })
+    };
+  }
 
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: false }
   });
 
   try {
     await client.connect();
 
-    // Verifica saldo atual do usuário
-    const saldoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
-    if (saldoRes.rows.length === 0) {
-      await client.end();
-      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Usuário não encontrado." }) };
-    }
-    const saldoAtual = parseFloat(saldoRes.rows[0].saldo);
-    if (saldoAtual < valorNum) {
-      await client.end();
-      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Saldo insuficiente." }) };
-    }
-
-    // Insere investimento e define próximo pagamento para daqui 5 minutos
+    // Inserir usando NOW() + interval '5 minutes' (evita inconsistÃªncias de timezone)
     const insert = await client.query(
       `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
-       VALUES ($1, $2, $3, NOW() + interval '5 minutes') RETURNING *`,
+       VALUES ($1, $2, $3, NOW() + interval '5 minutes')
+       RETURNING id, email, valor, lucro_diario, proximo_pagamento`,
       [email, valorNum, lucroNum]
     );
 
-    // Atualiza saldo do usuário subtraindo o valor investido
+    // Registrar transaÃ§Ã£o
     await client.query(
-      "UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2",
-      [valorNum, email]
+      `INSERT INTO transacoes (email, tipo, valor, data)
+       VALUES ($1, 'Investimento', $2, NOW())`,
+      [email, valorNum]
     );
-
-    // Busca saldo atualizado
-    const saldoAtualizadoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
-    const saldoAtualizado = parseFloat(saldoAtualizadoRes.rows[0].saldo);
 
     await client.end();
 
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        sucesso: true,
-        saldo: saldoAtualizado,
-        investimento: insert.rows[0],
-      }),
+      body: JSON.stringify({ sucesso: true, investimento: insert.rows[0] })
     };
-  } catch (error) {
-    console.error("Erro em salvarInvestimento:", error);
-    await client.end();
+
+  } catch (err) {
+    console.error("Erro ao salvar investimento:", err);
+    try { await client.end(); } catch(_) {}
     return {
       statusCode: 500,
-      body: JSON.stringify({ sucesso: false, mensagem: error.message }),
+      body: JSON.stringify({ sucesso: false, mensagem: "Erro no servidor", detalhe: err.message })
     };
   }
 };
