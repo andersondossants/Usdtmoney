@@ -479,7 +479,7 @@ function investir(valor, lucroDiario) {
     }
 
     // Atualiza saldo no backend
-    fetch('/.netlify/functions/updateSaldo', {
+    fetch('/.netlify/functions/liberarLucro', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
