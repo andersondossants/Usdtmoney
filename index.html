@@ -497,7 +497,7 @@ function investir(valor, lucroDiario) {
 setInterval(() => {
   if (proximoPagamento && Date.now() >= proximoPagamento) {
     saldo += rendimento; // adiciona o lucro diário
-    const proximo_pagamento = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // agenda a próxima
+    proximo_pagamento = new Date(Date.now() + 5 * 60 * 1000).toISOString(); // agenda a próxima
     atualizarSaldo();
     alert("Lucro diário creditado!");
   }
