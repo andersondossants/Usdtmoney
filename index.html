@@ -491,6 +491,15 @@ function investir(valor, lucroDiario) {
       })
     }).catch(err => console.error("Erro ao atualizar saldo:", err));
 
+    // Atualiza saldo no backend
+fetch('/.netlify/functions/updateSaldo', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: usuario.email,
+    saldo: saldo
+  })
+})
     // Salva o investimento no backend
     fetch('/.netlify/functions/salvarInvestimento', {
       method: 'POST',
