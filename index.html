@@ -479,7 +479,7 @@ function investir(valor, lucroDiario) {
     }
 
     // Salva o investimento no backend (responsável por criar o investimento e definir proximo_pagamento)
-    fetch('/.netlify/functions/liberarLucro', {
+    fetch('/.netlify/functions/salvarInvestimento', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
