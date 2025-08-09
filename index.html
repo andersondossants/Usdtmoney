@@ -493,6 +493,15 @@ function investir(valor, lucroDiario) {
     alert("Saldo insuficiente");
   }
       }
+      // Checa a cada minuto se já é hora de pagar rendimento
+setInterval(() => {
+  if (proximoPagamento && Date.now() >= proximoPagamento) {
+    saldo += rendimento; // adiciona o lucro diário
+    proximoPagamento = Date.now() + 5 * 60 * 1000; // agenda a próxima
+    atualizarSaldo();
+    alert("Lucro diário creditado!");
+  }
+}, 60000); // verifica a cada 1 minuto
 
       
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
