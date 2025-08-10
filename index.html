@@ -450,103 +450,127 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
     let rendimento = 0;
     let proximoPagamento = null;
 
-    netlifyIdentity.init();
+    // Inicializa o Netlify Identity
+netlifyIdentity.init();
 
-    function atualizarSaldo() {
-      document.getElementById("saldo").innerText = saldo.toFixed(2);
-    }
+// Variáveis globais
+let saldo = 0;
+let rendimento = 0;
+let proximoPagamento = null;
 
-    async function carregarInvestimento() {
-      const usuario = netlifyIdentity.currentUser();
-      if (!usuario) {
-        alert('Por favor, faça login');
-        return;
-      }
+// Atualiza o saldo exibido na tela
+function atualizarSaldo() {
+  document.getElementById("saldo").innerText = saldo.toFixed(2);
+}
 
-      try {
-        const res = await fetch(`/.netlify/functions/getInvestimento?email=${usuario.email}`);
-        if (!res.ok) {
-          saldo = 0;
-          rendimento = 0;
-          proximoPagamento = null;
-          atualizarSaldo();
-          return;
-        }
-        const data = await res.json();
-        saldo = parseFloat(data.saldo);
-        rendimento = parseFloat(data.lucro);
-        proximoPagamento = new Date(data.proximo_pagamento).getTime();
+// Carrega o investimento do usuário e inicia a verificação periódica dos lucros
+async function carregarInvestimento() {
+  const usuario = netlifyIdentity.currentUser();
+  if (!usuario) {
+    saldo = 0;
+    rendimento = 0;
+    proximoPagamento = null;
+    atualizarSaldo();
+    console.log('Usuário não logado. Por favor, faça login.');
+    return;
+  }
 
-        atualizarSaldo();
-        verificarLucro();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    async function investir(valor, lucro) {
-      const usuario = netlifyIdentity.currentUser();
-      if (!usuario) {
-        alert('Faça login para investir');
-        return;
-      }
-      if (saldo < valor) {
-        alert('Saldo insuficiente');
-        return;
-      }
-      saldo -= valor;
-      rendimento = lucro;
-      proximoPagamento = Date.now() + 5 * 60 * 1000;
+  try {
+    const res = await fetch(`/.netlify/functions/getInvestimento?email=${usuario.email}`);
+    if (!res.ok) {
+      saldo = 0;
+      rendimento = 0;
+      proximoPagamento = null;
       atualizarSaldo();
+      return;
+    }
+    const data = await res.json();
+    saldo = parseFloat(data.saldo);
+    rendimento = parseFloat(data.lucro);
+    proximoPagamento = new Date(data.proximo_pagamento).getTime();
 
-      await fetch('/.netlify/functions/salvarInvestimento', {
+    atualizarSaldo();
+    verificarLucro();
+  } catch (e) {
+    console.error('Erro ao carregar investimento:', e);
+  }
+}
+
+// Função para investir um valor com um lucro definido
+async function investir(valor, lucro) {
+  const usuario = netlifyIdentity.currentUser();
+  if (!usuario) {
+    alert('Faça login para investir');
+    return;
+  }
+  if (saldo < valor) {
+    alert('Saldo insuficiente');
+    return;
+  }
+  saldo -= valor;
+  rendimento = lucro;
+  proximoPagamento = Date.now() + 5 * 60 * 1000; // 5 minutos à frente
+  atualizarSaldo();
+
+  try {
+    await fetch('/.netlify/functions/salvarInvestimento', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: usuario.email,
+        valor: valor,
+        saldo: saldo,
+        lucro: rendimento,
+        proximo_pagamento: new Date(proximoPagamento).toISOString()
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    alert(`Investimento de ${valor} realizado!`);
+  } catch (e) {
+    console.error('Erro ao salvar investimento:', e);
+  }
+}
+
+// Função que verifica a cada 5 segundos se é hora de creditar lucro
+async function verificarLucro() {
+  const usuario = netlifyIdentity.currentUser();
+  if (!usuario) return;
+
+  if (proximoPagamento && Date.now() >= proximoPagamento) {
+    saldo += rendimento;
+    proximoPagamento = Date.now() + 5 * 60 * 1000; // agenda próximo pagamento
+    atualizarSaldo();
+
+    try {
+      await fetch('/.netlify/functions/atualizarSaldo', {
         method: 'POST',
         body: JSON.stringify({
           email: usuario.email,
-          valor: valor,
           saldo: saldo,
-          lucro: rendimento,
           proximo_pagamento: new Date(proximoPagamento).toISOString()
         }),
         headers: { 'Content-Type': 'application/json' }
       });
-
-      alert(`Investimento de ${valor} realizado!`);
+      alert('Lucro creditado!');
+    } catch (e) {
+      console.error('Erro ao atualizar saldo:', e);
     }
+  }
+  setTimeout(verificarLucro, 5000);
+}
 
-    async function verificarLucro() {
-      const usuario = netlifyIdentity.currentUser();
-      if (!usuario) return;
+// Eventos para controlar login e carregar dados quando usuário logar
+netlifyIdentity.on('login', () => {
+  carregarInvestimento();
+});
 
-      if (proximoPagamento && Date.now() >= proximoPagamento) {
-        saldo += rendimento;
-        proximoPagamento = Date.now() + 5 * 60 * 1000;
-        atualizarSaldo();
-
-        await fetch('/.netlify/functions/atualizarSaldo', {
-          method: 'POST',
-          body: JSON.stringify({
-            email: usuario.email,
-            saldo: saldo,
-            proximo_pagamento: new Date(proximoPagamento).toISOString()
-          }),
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        alert('Lucro creditado!');
-      }
-      setTimeout(verificarLucro, 5000);
-    }
-
-    netlifyIdentity.on('login', () => {
-      carregarInvestimento();
-    });
-
-    window.onload = () => {
-      if (netlifyIdentity.currentUser()) {
-        carregarInvestimento();
-      }
-    };
+// Ao carregar a página, tenta carregar o investimento se usuário já estiver logado
+window.onload = () => {
+  if (netlifyIdentity.currentUser()) {
+    carregarInvestimento();
+  } else {
+    console.log('Usuário não logado no carregamento da página.');
+  }
+};
       
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
