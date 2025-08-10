@@ -31,3 +31,16 @@ export default async function handler(event, context) {
     return { statusCode: 500, body: JSON.stringify({ error: 'Erro ao salvar investimento' }) };
   }
 }
+// Registrar transaÃ§Ã£o
+    await client.query(
+      `INSERT INTO transacoes (email, tipo, valor, data)
+       VALUES ($1, 'Investimento', $2, NOW())`,
+      [email, valorNum]
+    );
+
+    await client.end();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ sucesso: true, investimento: insert.rows[0] })
+    };
