@@ -445,77 +445,108 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
 </div> 
 
     <script>
-let saldo = 0;
-let rendimento = 0;
-let proximoPagamento = null;
-let indicados = [];
-let comissao = 0;
 
-function atualizarSaldo() {
-  document.getElementById("saldo").innerText = saldo.toFixed(2);
-}
+    let saldo = 0;
+    let rendimento = 0;
+    let proximoPagamento = null;
 
-// Buscar dados do usuário no banco Neon
-async function carregarInvestimento() {
-  const usuario = netlifyIdentity.currentUser();
-  if (!usuario) return;
+    netlifyIdentity.init();
 
-  try {
-    const res = await fetch(`/.netlify/functions/getInvestimento?email=${usuario.email}`);
-    const data = await res.json();
+    function atualizarSaldo() {
+      document.getElementById("saldo").innerText = saldo.toFixed(2);
+    }
 
-    if (data) {
-      saldo = data.saldo || 0;
-      rendimento = data.lucro || 0;
-      proximoPagamento = new Date(data.proximo_pagamento).getTime();
+    async function carregarInvestimento() {
+      const usuario = netlifyIdentity.currentUser();
+      if (!usuario) {
+        alert('Por favor, faça login');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/.netlify/functions/getInvestimento?email=${usuario.email}`);
+        if (!res.ok) {
+          saldo = 0;
+          rendimento = 0;
+          proximoPagamento = null;
+          atualizarSaldo();
+          return;
+        }
+        const data = await res.json();
+        saldo = parseFloat(data.saldo);
+        rendimento = parseFloat(data.lucro);
+        proximoPagamento = new Date(data.proximo_pagamento).getTime();
+
+        atualizarSaldo();
+        verificarLucro();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function investir(valor, lucro) {
+      const usuario = netlifyIdentity.currentUser();
+      if (!usuario) {
+        alert('Faça login para investir');
+        return;
+      }
+      if (saldo < valor) {
+        alert('Saldo insuficiente');
+        return;
+      }
+      saldo -= valor;
+      rendimento = lucro;
+      proximoPagamento = Date.now() + 5 * 60 * 1000;
       atualizarSaldo();
 
-      // Verifica se já é hora de pagar
-      verificarLucro();
-    }
-  } catch (err) {
-    console.error("Erro ao carregar investimento:", err);
-  }
-}
+      await fetch('/.netlify/functions/salvarInvestimento', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: usuario.email,
+          valor: valor,
+          saldo: saldo,
+          lucro: rendimento,
+          proximo_pagamento: new Date(proximoPagamento).toISOString()
+        }),
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-// Função chamada quando o usuário investe
-async function investir(valor, lucro) {
-  const usuario = netlifyIdentity.currentUser();
-  if (!usuario) {
-    alert("Usuário não identificado!");
-    return;
-  }
-
-  if (saldo >= valor) {
-    saldo -= valor;
-    rendimento = lucro;
-    proximoPagamento = Date.now() + (5 * 60 * 1000);
-
-    atualizarSaldo();
-    alert(`Investimento de $${valor} realizado! Próximo lucro em 5 minutos.`);
-
-    if (indicados.length > 0) {
-      comissao += valor * 0.10;
-      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+      alert(`Investimento de ${valor} realizado!`);
     }
 
-    // Salva no Neon
-    await fetch('/.netlify/functions/salvarInvestimento', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        valor: valor,
-        saldo: saldo,
-        lucro: lucro,
-        proximo_pagamento: new Date(proximoPagamento).toISOString()
-      })
-    }).catch(err => console.error("Erro ao salvar investimento:", err));
+    async function verificarLucro() {
+      const usuario = netlifyIdentity.currentUser();
+      if (!usuario) return;
 
-  } else {
-    alert("Saldo insuficiente");
-  }
-}
+      if (proximoPagamento && Date.now() >= proximoPagamento) {
+        saldo += rendimento;
+        proximoPagamento = Date.now() + 5 * 60 * 1000;
+        atualizarSaldo();
+
+        await fetch('/.netlify/functions/atualizarSaldo', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: usuario.email,
+            saldo: saldo,
+            proximo_pagamento: new Date(proximoPagamento).toISOString()
+          }),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        alert('Lucro creditado!');
+      }
+      setTimeout(verificarLucro, 5000);
+    }
+
+    netlifyIdentity.on('login', () => {
+      carregarInvestimento();
+    });
+
+    window.onload = () => {
+      if (netlifyIdentity.currentUser()) {
+        carregarInvestimento();
+      }
+    };
 
 // Verifica se já é hora de pagar lucro e atualiza no banco
 async function verificarLucro() {
