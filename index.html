@@ -547,39 +547,6 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
         carregarInvestimento();
       }
     };
-
-// Verifica se já é hora de pagar lucro e atualiza no banco
-async function verificarLucro() {
-  const usuario = netlifyIdentity.currentUser();
-  if (!usuario) return;
-
-  if (proximoPagamento && Date.now() >= proximoPagamento) {
-    saldo += rendimento;
-    proximoPagamento = Date.now() + (5 * 60 * 1000);
-
-    atualizarSaldo();
-
-    // Salva novo saldo e horário no Neon
-    await fetch('/.netlify/functions/atualizarSaldo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        saldo: saldo,
-        proximo_pagamento: new Date(proximoPagamento).toISOString()
-      })
-    });
-
-    alert("💰 Lucro creditado automaticamente!");
-  }
-}
-
-// Verifica a cada 5 segundos
-setInterval(verificarLucro, 5000);
-
-// Carrega dados assim que a página abrir
-document.addEventListener("DOMContentLoaded", carregarInvestimento);
-
       
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
