@@ -46,3 +46,16 @@ exports.handler = async function (event) {
     };
   }
 };
+// Registrar transaÃ§Ã£o
+    await client.query(
+      `INSERT INTO transacoes (email, tipo, valor, data)
+       VALUES ($1, 'Investimento', $2, NOW())`,
+      [email, valorNum]
+    );
+
+    await client.end();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ sucesso: true, investimento: insert.rows[0] })
+    };
