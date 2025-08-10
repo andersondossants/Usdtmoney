@@ -1,36 +1,42 @@
-import { Client } from '@neondatabase/serverless';
+const { Client } = require("pg");
 
-export default async function handler(event, context) {
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: JSON.stringify({ error: 'Método não permitido' }) };
+exports.handler = async (event) => {
+  const { email, valor, lucro_diario } = JSON.parse(event.body);
+  const valorNum = parseFloat(valor);
+  const lucroNum = parseFloat(lucro_diario);
 
-  const data = JSON.parse(event.body);
-  const { email, valor, saldo, lucro, proximo_pagamento } = data;
-
-  if (!email || !valor || saldo === undefined || lucro === undefined || !proximo_pagamento) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Campos obrigatórios faltando' }) };
-  }
-
-  const client = new Client({ connectionString: process.env.DATABASE_URL });
-  await client.connect();
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
 
   try {
-    await client.query(`
-      INSERT INTO investimentos (email, valor, saldo, lucro, proximo_pagamento)
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (email) DO UPDATE
-      SET valor = EXCLUDED.valor,
-          saldo = EXCLUDED.saldo,
-          lucro = EXCLUDED.lucro,
-          proximo_pagamento = EXCLUDED.proximo_pagamento
-    `, [email, valor, saldo, lucro, proximo_pagamento]);
+    await client.connect();
 
-    await client.end();
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
-  } catch (error) {
-    await client.end();
-    return { statusCode: 500, body: JSON.stringify({ error: 'Erro ao salvar investimento' }) };
-  }
-}
+    // Verifica saldo atual do usuÃ¡rio
+    const saldoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
+    if (saldoRes.rows.length === 0) {
+      await client.end();
+      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "UsuÃ¡rio nÃ£o encontrado." }) };
+    }
+    const saldoAtual = parseFloat(saldoRes.rows[0].saldo);
+    if (saldoAtual < valorNum) {
+      await client.end();
+      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Saldo insuficiente." }) };
+    }
+
+    // Insere investimento e define prÃ³ximo pagamento para daqui 5 minutos
+    const insert = await client.query(
+      `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
+       VALUES ($1, $2, $3, NOW() + interval '5 minutes') RETURNING *`,
+      [email, valorNum, lucroNum]
+    );
+
+    // Atualiza saldo do usuÃ¡rio subtraindo o valor investido
+    await client.query(
+      "UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2",
+      [valorNum, email]
+    );
 // Registrar transaÃ§Ã£o
     await client.query(
       `INSERT INTO transacoes (email, tipo, valor, data)
@@ -44,3 +50,26 @@ export default async function handler(event, context) {
       statusCode: 200,
       body: JSON.stringify({ sucesso: true, investimento: insert.rows[0] })
     };
+    // Busca saldo atualizado
+    const saldoAtualizadoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
+    const saldoAtualizado = parseFloat(saldoAtualizadoRes.rows[0].saldo);
+
+    await client.end();
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        sucesso: true,
+        saldo: saldoAtualizado,
+        investimento: insert.rows[0],
+      }),
+    };
+  } catch (error) {
+    console.error("Erro em salvarInvestimento:", error);
+    await client.end();
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ sucesso: false, mensagem: error.message }),
+    };
+  }
+};
