@@ -445,30 +445,54 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
 </div> 
 
     <script>
-
-let saldo = 3.00;
-let lucroDiario = 0
+      let saldo = 3.00;
+let lucroDiario = 0;
 let rendimento = 0; 
 let proximoPagamento = null;
 let indicados = [];
 let comissao = 0;
 let usuario = { email: "" }; // Ajuste para puxar o email real do login
+let investimentoAtivo = false; // Vai mudar para true se backend confirmar
 
 // Atualiza saldo na tela
 function atualizarSaldo() {
-  document.getElementById("saldo").innerText = saldo.toFixed(2);
+    const el = document.getElementById("saldo");
+    if (el) el.innerText = saldo.toFixed(2);
+}
+
+// Checa no backend se já existe investimento ativo
+async function verificarInvestimentoAtivo() {
+    try {
+        const resp = await fetch('/.netlify/functions/verificarInvestimento?email=' + usuario.email);
+        const dados = await resp.json();
+
+        if (dados.ativo) {
+            investimentoAtivo = true;
+            lucroDiario = dados.lucro_diario;
+            proximoPagamento = new Date(dados.proximo_pagamento).getTime();
+            saldo = dados.saldo;
+            atualizarSaldo();
+            console.log("Investimento ativo detectado, loop iniciado.");
+        } else {
+            console.log("Nenhum investimento ativo encontrado.");
+        }
+    } catch (err) {
+        console.error("Erro ao verificar investimento:", err);
+    }
 }
 
 // Função de investimento
 function investir(valor) {
-    // Cálculo do lucro baseado no valor investido
-    lucroDiario = valor * 0.10; // exemplo: 10% de retorno
+    if (typeof valor !== "number" || valor <= 0) {
+        console.error("Valor de investimento inválido.");
+        return;
+    }
+
+    lucroDiario = valor * 0.10; // Exemplo: 10% de retorno
     rendimento += lucroDiario;
-
-    // Define próximo pagamento para 2 minutos após o investimento
     proximoPagamento = Date.now() + (2 * 60 * 1000);
+    investimentoAtivo = true;
 
-    // Salva no backend
     fetch('/.netlify/functions/salvarInvestimento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -476,29 +500,33 @@ function investir(valor) {
             email: usuario.email,
             valor: valor,
             lucro_diario: lucroDiario,
-            proximo_pagamento: proximoPagamento
+            proximo_pagamento: new Date(proximoPagamento).toISOString()
         })
-    });
+    }).catch(err => console.error("Erro ao salvar investimento:", err));
 
     console.log(`Investimento de R$${valor} realizado. Lucro inicial de R$${lucroDiario} creditado.`);
 }
 
 // Loop de pagamento contínuo
 setInterval(() => {
-    if (proximoPagamento && Date.now() >= proximoPagamento) {
-        rendimento += lucroDiario; // adiciona lucro acumulado
-        saldo += lucroDiario; // adiciona lucro ao saldo
-        atualizarSaldo(); // atualiza exibição do saldo
-        proximoPagamento = Date.now() + (2 * 60 * 1000); // agenda próximo pagamento
+    if (investimentoAtivo && proximoPagamento && Date.now() >= proximoPagamento) {
+        rendimento += lucroDiario;
+        saldo += lucroDiario;
+        atualizarSaldo();
+        proximoPagamento = Date.now() + (2 * 60 * 1000);
 
         console.log(`Lucro de R$${lucroDiario} creditado. Rendimento total: R$${rendimento}`);
     }
 }, 1000);
-      
-    function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
-    function fecharModal(){document.getElementById('modalSaque').style.display='none';}
-    function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
-    function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
+
+// Funções de modal
+function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
+function fecharModal(){document.getElementById('modalSaque').style.display='none';}
+function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
+function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
+
+// Chama a verificação no carregamento da página
+verificarInvestimentoAtivo();
 
     function confirmarSaque() {
   const valor = parseFloat(document.getElementById("valorSaque").value);
