@@ -13,11 +13,11 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
-    // Verifica saldo atual do usuÃ¡rio
+    // Verifica saldo do usuário
     const saldoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
     if (saldoRes.rows.length === 0) {
       await client.end();
-      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "UsuÃ¡rio nÃ£o encontrado." }) };
+      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Usuário não encontrado." }) };
     }
     const saldoAtual = parseFloat(saldoRes.rows[0].saldo);
     if (saldoAtual < valorNum) {
@@ -25,31 +25,26 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Saldo insuficiente." }) };
     }
 
-    // Insere investimento e define prÃ³ximo pagamento para daqui 5 minutos
+    // Insere investimento com próximo pagamento daqui 2 minutos
     const insert = await client.query(
       `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
-       VALUES ($1, $2, $3, NOW() + interval '5 minutes') RETURNING *`,
+       VALUES ($1, $2, $3, NOW() + interval '2 minutes') RETURNING *`,
       [email, valorNum, lucroNum]
     );
 
-    // Atualiza saldo do usuÃ¡rio subtraindo o valor investido
+    // Atualiza saldo do usuário
     await client.query(
       "UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2",
       [valorNum, email]
     );
-// Registrar transaÃ§Ã£o
+
+    // Registra transação
     await client.query(
       `INSERT INTO transacoes (email, tipo, valor, data)
        VALUES ($1, 'Investimento', $2, NOW())`,
       [email, valorNum]
     );
 
-    await client.end();
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ sucesso: true, investimento: insert.rows[0] })
-    };
     // Busca saldo atualizado
     const saldoAtualizadoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
     const saldoAtualizado = parseFloat(saldoAtualizadoRes.rows[0].saldo);
