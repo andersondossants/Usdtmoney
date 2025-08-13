@@ -1,27 +1,43 @@
-const { Client } = require("pg");
+const { Pool } = require("pg");
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
 exports.handler = async (event) => {
-  const { email, valor, lucro_diario } = JSON.parse(event.body);
+  // Garantir que é POST
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, body: JSON.stringify({ sucesso: false, mensagem: "Método não permitido." }) };
+  }
+
+  // Validar JSON recebido
+  let data;
+  try {
+    data = JSON.parse(event.body || "{}");
+  } catch (err) {
+    return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "JSON inválido." }) };
+  }
+
+  const { email, valor, lucro_diario } = data;
   const valorNum = parseFloat(valor);
   const lucroNum = parseFloat(lucro_diario);
 
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
+  if (!email || isNaN(valorNum) || isNaN(lucroNum)) {
+    return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Dados inválidos." }) };
+  }
+
+  const client = await pool.connect();
 
   try {
-    await client.connect();
-
     // Verifica saldo do usuário
     const saldoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
     if (saldoRes.rows.length === 0) {
-      await client.end();
       return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Usuário não encontrado." }) };
     }
+
     const saldoAtual = parseFloat(saldoRes.rows[0].saldo);
     if (saldoAtual < valorNum) {
-      await client.end();
       return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Saldo insuficiente." }) };
     }
 
@@ -49,8 +65,6 @@ exports.handler = async (event) => {
     const saldoAtualizadoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
     const saldoAtualizado = parseFloat(saldoAtualizadoRes.rows[0].saldo);
 
-    await client.end();
-
     return {
       statusCode: 200,
       body: JSON.stringify({
@@ -61,10 +75,11 @@ exports.handler = async (event) => {
     };
   } catch (error) {
     console.error("Erro em salvarInvestimento:", error);
-    await client.end();
     return {
       statusCode: 500,
       body: JSON.stringify({ sucesso: false, mensagem: error.message }),
     };
+  } finally {
+    client.release(); // Libera conexão ao pool
   }
 };
