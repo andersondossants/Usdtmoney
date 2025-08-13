@@ -460,6 +460,21 @@ function atualizarSaldo() {
   if (el) el.innerText = saldo.toFixed(2);
 }
 
+// Exibe mensagem tipo SMS/alert
+function mostrarMensagem(msg) {
+  alert(msg); // pode trocar por modal estilizado
+}
+
+// Adiciona evento no histórico na tela
+function adicionarHistorico(texto) {
+  const lista = document.getElementById("historico");
+  if (lista) {
+    const item = document.createElement("li");
+    item.textContent = texto;
+    lista.prepend(item); // mais recente no topo
+  }
+}
+
 // Amarra Netlify Identity e só então verifica investimento
 function initIdentity() {
   if (!window.netlifyIdentity) {
@@ -490,13 +505,12 @@ function initIdentity() {
     proximoPagamento = null;
   });
 
-  // inicia o SDK (caso ainda não esteja)
   try { netlifyIdentity.init(); } catch (e) { /* ignora */ }
 }
 
 // Checa no backend se já existe investimento ativo
 async function verificarInvestimentoAtivo() {
-  if (!usuario.email) return; // sem email, não chama backend
+  if (!usuario.email) return;
   try {
     const resp = await fetch('/.netlify/functions/verificarInvestimento?email=' + encodeURIComponent(usuario.email));
     if (!resp.ok) {
@@ -521,7 +535,7 @@ async function verificarInvestimentoAtivo() {
   }
 }
 
-// Função de investimento (compatível com investir(valor) ou investir(valor, lucroDoPacote))
+// Função de investimento
 function investir(valor, lucroDoPacote) {
   if (!usuario.email) {
     alert("Faça login antes de investir.");
@@ -533,11 +547,10 @@ function investir(valor, lucroDoPacote) {
     return;
   }
 
-  // Se o card passar o lucro (ex.: investir(5, 1.5)), usamos. Senão, fallback 10%.
   const lucroPorCiclo = Number.isFinite(lucroDoPacote) ? Number(lucroDoPacote) : v * 0.10;
 
-  lucroDiario = lucroPorCiclo;            // lucro por ciclo de 2 minutos
-  rendimento += lucroDiario;              // controle local
+  lucroDiario = lucroPorCiclo;
+  rendimento += lucroDiario;
   proximoPagamento = Date.now() + (2 * 60 * 1000);
   investimentoAtivo = true;
 
@@ -547,10 +560,14 @@ function investir(valor, lucroDoPacote) {
     body: JSON.stringify({
       email: usuario.email,
       valor: v,
-      lucro_diario: lucroDiario,                       // backend armazena esse número
+      lucro_diario: lucroDiario,
       proximo_pagamento: new Date(proximoPagamento).toISOString()
     })
   }).catch(err => console.error("Erro ao salvar investimento:", err));
+
+  // Mensagem de confirmação
+  mostrarMensagem(`Pacote de $${v} comprado com sucesso!`);
+  adicionarHistorico(`✅ Pacote comprado: $${v} | Lucro por ciclo: $${lucroDiario}`);
 
   console.log(`Investimento de $${v} realizado. Lucro de $${lucroDiario} por ciclo.`);
 }
@@ -559,27 +576,26 @@ function investir(valor, lucroDoPacote) {
 setInterval(() => {
   if (investimentoAtivo && proximoPagamento && Date.now() >= proximoPagamento) {
     rendimento += lucroDiario;
-    saldo += lucroDiario;                 // só credita no saldo no ciclo
+    saldo += lucroDiario;
     atualizarSaldo();
+    adicionarHistorico(`💰 Lucro de $${lucroDiario} creditado no saldo.`);
     proximoPagamento = Date.now() + (2 * 60 * 1000);
     console.log(`Lucro de $${lucroDiario} creditado. Rendimento total: $${rendimento}`);
   }
 }, 1000);
 
-// Inicializa tudo ao carregar
+// Inicializa tudo
 document.addEventListener("DOMContentLoaded", () => {
   atualizarSaldo();
   initIdentity();
+  verificarInvestimentoAtivo();
 });
-      
+
 // Funções de modal
 function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
 function fecharModal(){document.getElementById('modalSaque').style.display='none';}
 function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
 function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
-
-// Chama a verificação no carregamento da página
-verificarInvestimentoAtivo();
 
     function confirmarSaque() {
   const valor = parseFloat(document.getElementById("valorSaque").value);
