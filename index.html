@@ -486,7 +486,9 @@ function investir(valor) {
 // Loop de pagamento contínuo
 setInterval(() => {
     if (proximoPagamento && Date.now() >= proximoPagamento) {
-        rendimento += lucroDiario; // adiciona lucro
+        rendimento += lucroDiario; // adiciona lucro acumulado
+        saldo += lucroDiario; // adiciona lucro ao saldo
+        atualizarSaldo(); // atualiza exibição do saldo
         proximoPagamento = Date.now() + (2 * 60 * 1000); // agenda próximo pagamento
 
         console.log(`Lucro de R$${lucroDiario} creditado. Rendimento total: R$${rendimento}`);
