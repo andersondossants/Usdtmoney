@@ -446,64 +446,52 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
 
     <script>
 
-    let saldo = 3.00;
+let saldo = 3.00;
+let lucroDiario = 0
 let rendimento = 0; 
-let proximoPagamento = Date.now() + 1 * 60 * 1000;
+let proximoPagamento = null;
 let indicados = [];
 let comissao = 0;
-  
+let usuario = { email: "" }; // Ajuste para puxar o email real do login
+
 // Atualiza saldo na tela
 function atualizarSaldo() {
   document.getElementById("saldo").innerText = saldo.toFixed(2);
 }
 
-// Função chamada quando o usuário investe em um pacote
-function investir(valor, lucroDiario) {
-  const usuario = netlifyIdentity.currentUser();
-  if (!usuario) {
-    alert("Usuário não identificado!");
-    return;
-  }
-
-  if (saldo >= valor) {
-    saldo -= valor;
+// Função de investimento
+function investir(valor) {
+    // Cálculo do lucro baseado no valor investido
+    lucroDiario = valor * 0.10; // exemplo: 10% de retorno
     rendimento += lucroDiario;
 
-    atualizarSaldo();
-    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24 horas.");
+    // Define próximo pagamento para 2 minutos após o investimento
+    proximoPagamento = Date.now() + (2 * 60 * 1000);
 
-    // Atualiza comissão se tiver indicados
-    if (indicados.length > 0) {
-      comissao += valor * 0.10;
-      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
-    }
-
-    // Atualiza saldo no backend
-    fetch('/.netlify/functions/updateSaldo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        saldo: saldo
-      })
-    }).catch(err => console.error("Erro ao atualizar saldo:", err));
-
-    // Salva o investimento no backend
+    // Salva no backend
     fetch('/.netlify/functions/salvarInvestimento', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        valor: valor,
-        lucro_diario: lucroDiario // nome do campo deve bater com o backend
-      })
-    }).catch(err => console.error("Erro ao salvar investimento:", err));
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            email: usuario.email,
+            valor: valor,
+            lucro_diario: lucroDiario,
+            proximo_pagamento: proximoPagamento
+        })
+    });
 
-  } else {
-    alert("Saldo insuficiente");
-  }
-      }
+    console.log(`Investimento de R$${valor} realizado. Lucro inicial de R$${lucroDiario} creditado.`);
+}
 
+// Loop de pagamento contínuo
+setInterval(() => {
+    if (proximoPagamento && Date.now() >= proximoPagamento) {
+        rendimento += lucroDiario; // adiciona lucro
+        proximoPagamento = Date.now() + (2 * 60 * 1000); // agenda próximo pagamento
+
+        console.log(`Lucro de R$${lucroDiario} creditado. Rendimento total: R$${rendimento}`);
+    }
+}, 1000);
       
     function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
     function fecharModal(){document.getElementById('modalSaque').style.display='none';}
