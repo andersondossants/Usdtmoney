@@ -579,8 +579,27 @@ setInterval(() => {
     saldo += lucroDiario;
     atualizarSaldo();
     adicionarHistorico(`💰 Lucro de $${lucroDiario} creditado no saldo.`);
+
+    // Atualiza também no backend
+    fetch('/.netlify/functions/creditarLucro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: usuario.email,
+        lucro: lucroDiario
+      })
+    })
+    .then(res => res.json())
+    .then(dados => {
+      if (dados.sucesso) {
+        saldo = dados.saldo; // garante que o saldo exibido é o do banco
+        atualizarSaldo();
+      }
+    })
+    .catch(err => console.error("Erro ao creditar lucro:", err));
+
+    // Próximo pagamento em 2 minutos
     proximoPagamento = Date.now() + (2 * 60 * 1000);
-    console.log(`Lucro de $${lucroDiario} creditado. Rendimento total: $${rendimento}`);
   }
 }, 1000);
 
