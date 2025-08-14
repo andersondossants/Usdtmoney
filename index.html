@@ -446,39 +446,39 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
 
     <script>
       let saldo = 3.00;
-let lucroDiario = 0;           // aqui está representando "lucro por ciclo" (2 min)
-let rendimento = 0; 
+let lucroDiario = 0;  // lucro por ciclo (controlado pelo backend)
+let rendimento = 0;
 let proximoPagamento = null;
 let indicados = [];
 let comissao = 0;
 let usuario = { email: "" };
 let investimentoAtivo = false;
 
-// Atualiza saldo na tela (com proteção)
+// Atualiza saldo na tela
 function atualizarSaldo() {
   const el = document.getElementById("saldo");
   if (el) el.innerText = saldo.toFixed(2);
 }
 
-// Exibe mensagem tipo SMS/alert
+// Exibe mensagem
 function mostrarMensagem(msg) {
-  alert(msg); // pode trocar por modal estilizado
+  alert(msg);
 }
 
-// Adiciona evento no histórico na tela
+// Adiciona evento no histórico
 function adicionarHistorico(texto) {
   const lista = document.getElementById("historico");
   if (lista) {
     const item = document.createElement("li");
     item.textContent = texto;
-    lista.prepend(item); // mais recente no topo
+    lista.prepend(item);
   }
 }
 
-// Amarra Netlify Identity e só então verifica investimento
+// Inicializa login via Netlify Identity
 function initIdentity() {
   if (!window.netlifyIdentity) {
-    console.warn("Netlify Identity não encontrado na página.");
+    console.warn("Netlify Identity não encontrado.");
     atualizarSaldo();
     return;
   }
@@ -508,7 +508,7 @@ function initIdentity() {
   try { netlifyIdentity.init(); } catch (e) { /* ignora */ }
 }
 
-// Checa no backend se já existe investimento ativo
+// Carrega saldo e histórico real do backend
 async function carregarSaldoReal() {
   if (!usuario.email) return;
 
@@ -531,19 +531,13 @@ async function carregarSaldoReal() {
   }
 }
 
-// Chame ao carregar a página, ao logar e quando quiser atualizar manualmente:
-document.addEventListener("DOMContentLoaded", () => {
-  atualizarSaldo();
-  initIdentity();
-  carregarSaldoReal(); // primeira sincronização real
-});
-
-// Função de investimento
+// Comprar pacote de investimento
 async function investir(valor, lucroDoPacote) {
   if (!usuario.email) {
     alert("Faça login antes de investir.");
     return;
   }
+
   const v = Number(valor);
   const lucroPorCiclo = Number(lucroDoPacote);
 
@@ -570,47 +564,27 @@ async function investir(valor, lucroDoPacote) {
 
     mostrarMensagem(`✅ Pacote de $${v} comprado com sucesso!`);
     adicionarHistorico(`📦 Pacote: $${v} | Lucro por ciclo: $${lucroPorCiclo}`);
-    saldo = Number(dados.saldo) || saldo; // saldo já debitado pelo backend
+    saldo = Number(dados.saldo) || saldo; 
     atualizarSaldo();
 
-    // Sincroniza lucros futuros (opcional)
+    // Atualiza com dados reais do banco
     carregarSaldoReal();
   } catch (err) {
     console.error("Erro ao investir:", err);
     alert("Falha ao processar o investimento: " + err.message);
   }
-      }
-    // Atualiza também no backend
-    fetch('/.netlify/functions/creditarLucro', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        lucro: lucroDiario
-      })
-    })
-    .then(res => res.json())
-    .then(dados => {
-      if (dados.sucesso) {
-        saldo = dados.saldo; // garante que o saldo exibido é o do banco
-        atualizarSaldo();
-      }
-    })
-    .catch(err => console.error("Erro ao creditar lucro:", err));
+}
 
-    // Próximo pagamento em 2 minutos
-    proximoPagamento = Date.now() + (2 * 60 * 1000);
-  }
-}, 1000);
-      // Atualiza a cada 30s, por exemplo:
-setInterval(carregarSaldoReal, 30000);
-
-// Inicializa tudo
+// Inicialização
 document.addEventListener("DOMContentLoaded", () => {
   atualizarSaldo();
   initIdentity();
+  carregarSaldoReal();
   verificarInvestimentoAtivo();
 });
+
+// Atualiza saldo real do banco a cada 30s
+setInterval(carregarSaldoReal, 30000);
 
 // Funções de modal
 function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
