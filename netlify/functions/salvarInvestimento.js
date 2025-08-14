@@ -6,80 +6,80 @@ const pool = new Pool({
 });
 
 exports.handler = async (event) => {
-  if (event.httpMethod !== "GET") {
+  if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ sucesso: false, mensagem: "Método não permitido." }) };
   }
 
-  const email = event.queryStringParameters.email;
-  if (!email) {
-    return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "E-mail não informado." }) };
+  let data;
+  try {
+    data = JSON.parse(event.body || "{}");
+  } catch (err) {
+    return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "JSON inválido." }) };
+  }
+
+  const { email, valor, lucro_diario } = data;
+  const valorNum = parseFloat(valor);
+  const lucroNum = parseFloat(lucro_diario);
+
+  if (!email || isNaN(valorNum) || isNaN(lucroNum)) {
+    return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Dados inválidos." }) };
   }
 
   const client = await pool.connect();
 
   try {
-    // Buscar investimento ativo do usuário
-    const invRes = await client.query(
-      "SELECT * FROM investimentos WHERE email = $1 ORDER BY id DESC LIMIT 1",
-      [email]
+    // Verifica saldo do usuário
+    const saldoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
+    if (saldoRes.rows.length === 0) {
+      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Usuário não encontrado." }) };
+    }
+
+    const saldoAtual = parseFloat(saldoRes.rows[0].saldo);
+    if (saldoAtual < valorNum) {
+      return { statusCode: 400, body: JSON.stringify({ sucesso: false, mensagem: "Saldo insuficiente." }) };
+    }
+
+    // Próximo pagamento em 2 minutos
+    const proximoPagamento = new Date(Date.now() + 2 * 60 * 1000);
+
+    // Insere investimento
+    const insert = await client.query(
+      `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [email, valorNum, lucroNum, proximoPagamento]
     );
 
-    if (invRes.rows.length === 0) {
-      return { statusCode: 200, body: JSON.stringify({ ativo: false }) };
-    }
+    // Debita valor investido
+    await client.query(
+      "UPDATE usuarios SET saldo = saldo - $1 WHERE email = $2",
+      [valorNum, email]
+    );
 
-    const investimento = invRes.rows[0];
-    let saldoUsuario = 0;
+    // Registra transação
+    await client.query(
+      `INSERT INTO transacoes (email, tipo, valor, data)
+       VALUES ($1, 'Investimento', $2, NOW())`,
+      [email, valorNum]
+    );
 
-    // Buscar saldo do usuário
-    const saldoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
-    if (saldoRes.rows.length > 0) {
-      saldoUsuario = parseFloat(saldoRes.rows[0].saldo);
-    }
-
-    const agora = Date.now();
-    let proximo = new Date(investimento.proximo_pagamento).getTime();
-    const lucroDiario = parseFloat(investimento.lucro_diario);
-    let saldoNovo = saldoUsuario;
-
-    // Calcular ciclos que passaram
-    let ciclos = 0;
-    while (agora >= proximo) {
-      saldoNovo += lucroDiario;
-      proximo += 2 * 60 * 1000; // próximo ciclo
-      ciclos++;
-    }
-
-    // Se houver ciclos, atualizar no banco
-    if (ciclos > 0) {
-      await client.query(
-        "UPDATE usuarios SET saldo = $1 WHERE email = $2",
-        [saldoNovo, email]
-      );
-
-      await client.query(
-        "UPDATE investimentos SET proximo_pagamento = to_timestamp($1 / 1000.0) WHERE id = $2",
-        [proximo, investimento.id]
-      );
-
-      await client.query(
-        "INSERT INTO transacoes (email, tipo, valor, data) VALUES ($1, 'Lucro', $2, NOW())",
-        [email, lucroDiario * ciclos]
-      );
-    }
+    // Busca saldo atualizado
+    const saldoAtualizadoRes = await client.query("SELECT saldo FROM usuarios WHERE email = $1", [email]);
+    const saldoAtualizado = parseFloat(saldoAtualizadoRes.rows[0].saldo);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
-        ativo: true,
-        saldo: saldoNovo,
-        lucro_diario: lucroDiario,
-        proximo_pagamento: proximo
+        sucesso: true,
+        saldo: saldoAtualizado,
+        investimento: insert.rows[0],
       }),
     };
   } catch (error) {
-    console.error("Erro verificarInvestimento:", error);
-    return { statusCode: 500, body: JSON.stringify({ sucesso: false, mensagem: error.message }) };
+    console.error("Erro em salvarInvestimento:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ sucesso: false, mensagem: error.message }),
+    };
   } finally {
     client.release();
   }
