@@ -509,77 +509,77 @@ function initIdentity() {
 }
 
 // Checa no backend se já existe investimento ativo
-async function verificarInvestimentoAtivo() {
+async function carregarSaldoReal() {
   if (!usuario.email) return;
+
   try {
-    const resp = await fetch('/.netlify/functions/verificarInvestimento?email=' + encodeURIComponent(usuario.email));
-    if (!resp.ok) {
-      const txt = await resp.text();
-      throw new Error("HTTP " + resp.status + " - " + txt);
-    }
+    const resp = await fetch('/.netlify/functions/getSaldoEAtualizar?email=' + encodeURIComponent(usuario.email));
     const dados = await resp.json();
 
-    if (dados.ativo) {
-      investimentoAtivo = true;
-      lucroDiario = Number(dados.lucro_diario) || 0;
-      proximoPagamento = new Date(dados.proximo_pagamento).getTime();
-      saldo = Number(dados.saldo) || saldo;
+    if (dados.sucesso) {
+      saldo = Number(dados.saldo) || 0;
       atualizarSaldo();
-      console.log("Investimento ativo detectado, loop iniciado.");
+
+      if (dados.lucro_creditado > 0) {
+        adicionarHistorico(`💰 Lucro total creditado: $${Number(dados.lucro_creditado).toFixed(2)}`);
+      }
     } else {
-      investimentoAtivo = false;
-      console.log("Nenhum investimento ativo encontrado.");
+      console.warn(dados.mensagem || "Falha ao atualizar saldo.");
     }
   } catch (err) {
-    console.error("Erro ao verificar investimento:", err);
+    console.error("Erro ao carregar saldo real:", err);
   }
 }
 
+// Chame ao carregar a página, ao logar e quando quiser atualizar manualmente:
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarSaldo();
+  initIdentity();
+  carregarSaldoReal(); // primeira sincronização real
+});
+
 // Função de investimento
-function investir(valor, lucroDoPacote) {
+async function investir(valor, lucroDoPacote) {
   if (!usuario.email) {
     alert("Faça login antes de investir.");
     return;
   }
   const v = Number(valor);
-  if (!Number.isFinite(v) || v <= 0) {
-    console.error("Valor de investimento inválido.");
+  const lucroPorCiclo = Number(lucroDoPacote);
+
+  if (!Number.isFinite(v) || v <= 0 || !Number.isFinite(lucroPorCiclo) || lucroPorCiclo <= 0) {
+    alert("Dados do investimento inválidos.");
     return;
   }
 
-  const lucroPorCiclo = Number.isFinite(lucroDoPacote) ? Number(lucroDoPacote) : v * 0.10;
+  try {
+    const resp = await fetch('/.netlify/functions/salvarInvestimento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: usuario.email,
+        valor: v,
+        lucro_diario: lucroPorCiclo
+      })
+    });
 
-  lucroDiario = lucroPorCiclo;
-  rendimento += lucroDiario;
-  proximoPagamento = Date.now() + (2 * 60 * 1000);
-  investimentoAtivo = true;
+    const dados = await resp.json();
+    if (!resp.ok || !dados.sucesso) {
+      throw new Error(dados.mensagem || "Erro ao salvar investimento");
+    }
 
-  fetch('/.netlify/functions/salvarInvestimento', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: usuario.email,
-      valor: v,
-      lucro_diario: lucroDiario,
-      proximo_pagamento: new Date(proximoPagamento).toISOString()
-    })
-  }).catch(err => console.error("Erro ao salvar investimento:", err));
-
-  // Mensagem de confirmação
-  mostrarMensagem(`Pacote de $${v} comprado com sucesso!`);
-  adicionarHistorico(`✅ Pacote comprado: $${v} | Lucro por ciclo: $${lucroDiario}`);
-
-  console.log(`Investimento de $${v} realizado. Lucro de $${lucroDiario} por ciclo.`);
-}
-
-// Loop de pagamento contínuo (2 minutos)
-setInterval(() => {
-  if (investimentoAtivo && proximoPagamento && Date.now() >= proximoPagamento) {
-    rendimento += lucroDiario;
-    saldo += lucroDiario;
+    mostrarMensagem(`✅ Pacote de $${v} comprado com sucesso!`);
+    adicionarHistorico(`📦 Pacote: $${v} | Lucro por ciclo: $${lucroPorCiclo}`);
+    saldo = Number(dados.saldo) || saldo; // saldo já debitado pelo backend
     atualizarSaldo();
-    adicionarHistorico(`💰 Lucro de $${lucroDiario} creditado no saldo.`);
 
+    // Sincroniza lucros futuros (opcional)
+    carregarSaldoReal();
+  } catch (err) {
+    console.error("Erro ao investir:", err);
+    alert("Falha ao processar o investimento: " + err.message);
+  }
+      }
     // Atualiza também no backend
     fetch('/.netlify/functions/creditarLucro', {
       method: 'POST',
@@ -602,6 +602,8 @@ setInterval(() => {
     proximoPagamento = Date.now() + (2 * 60 * 1000);
   }
 }, 1000);
+      // Atualiza a cada 30s, por exemplo:
+setInterval(carregarSaldoReal, 30000);
 
 // Inicializa tudo
 document.addEventListener("DOMContentLoaded", () => {
