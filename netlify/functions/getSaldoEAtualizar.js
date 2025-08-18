@@ -19,7 +19,6 @@ exports.handler = async (event) => {
   try {
     const client = await pool.connect();
 
-    // Busca investimento do usuário
     const res = await client.query(
       "SELECT saldo, lucro_diario, ultimo_pagamento FROM usuarios WHERE email = $1",
       [email]
@@ -39,14 +38,25 @@ exports.handler = async (event) => {
     const agora = Date.now();
     const ultimo = ultimo_pagamento ? new Date(ultimo_pagamento).getTime() : agora;
 
-    // Calcula quantos ciclos de 2 min já passaram
-    const ciclos = Math.floor((agora - ultimo) / CYCLE_MS);
+    const diffMs = agora - ultimo;
+    const ciclos = Math.floor(diffMs / CYCLE_MS);
 
-    if (ciclos > 0) {
+    // 🔍 LOGS PARA DEPURAÇÃO
+    console.log("=====================================");
+    console.log("Email:", email);
+    console.log("Saldo atual:", saldo);
+    console.log("Lucro por ciclo:", lucro_diario);
+    console.log("Último pagamento salvo:", ultimo_pagamento);
+    console.log("Agora (ms):", agora);
+    console.log("Último (ms):", ultimo);
+    console.log("Diferença em ms:", diffMs);
+    console.log("Ciclos passados:", ciclos);
+    console.log("=====================================");
+
+    if (ciclos > 0 && lucro_diario > 0) {
       lucro_creditado = ciclos * lucro_diario;
       saldo += lucro_creditado;
 
-      // Atualiza no banco
       await client.query(
         "UPDATE usuarios SET saldo = $1, ultimo_pagamento = NOW() WHERE email = $2",
         [saldo, email]
@@ -60,7 +70,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ sucesso: true, saldo, lucro_creditado })
     };
   } catch (err) {
-    console.error("Erro no getSaldoEAtualizar:", err);
+    console.error("❌ Erro no getSaldoEAtualizar:", err);
     return {
       statusCode: 500,
       body: JSON.stringify({ sucesso: false, mensagem: "Erro no servidor" })
