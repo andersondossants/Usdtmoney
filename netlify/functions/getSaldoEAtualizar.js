@@ -5,7 +5,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-const CYCLE_MS = 2 * 60 * 1000; // 2 minutos
+const CYCLE_MS = 24 * 60 * 60 * 1000; // 24 horas
 
 exports.handler = async (event) => {
   const email = event.queryStringParameters?.email;
