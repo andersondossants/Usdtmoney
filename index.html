@@ -486,7 +486,7 @@ function initIdentity() {
   netlifyIdentity.on("init", (user) => {
     if (user && user.email) {
       usuario.email = user.email;
-      verificarInvestimentoAtivo();
+      carregarSaldoReal();
     }
     atualizarSaldo();
   });
@@ -494,15 +494,14 @@ function initIdentity() {
   netlifyIdentity.on("login", (user) => {
     if (user && user.email) {
       usuario.email = user.email;
-      verificarInvestimentoAtivo();
+      carregarSaldoReal();
     }
   });
 
   netlifyIdentity.on("logout", () => {
     usuario.email = "";
-    investimentoAtivo = false;
-    lucroDiario = 0;
-    proximoPagamento = null;
+    saldo = 0;
+    atualizarSaldo();
   });
 
   try { netlifyIdentity.init(); } catch (e) { /* ignora */ }
@@ -521,7 +520,7 @@ async function carregarSaldoReal() {
       atualizarSaldo();
 
       if (dados.lucro_creditado > 0) {
-        adicionarHistorico(`💰 Lucro total creditado: $${Number(dados.lucro_creditado).toFixed(2)}`);
+        adicionarHistorico(`💰 Lucro creditado: $${Number(dados.lucro_creditado).toFixed(2)}`);
       }
     } else {
       console.warn(dados.mensagem || "Falha ao atualizar saldo.");
@@ -567,8 +566,7 @@ async function investir(valor, lucroDoPacote) {
     saldo = Number(dados.saldo) || saldo; 
     atualizarSaldo();
 
-    // Atualiza com dados reais do banco
-    carregarSaldoReal();
+    carregarSaldoReal(); // garante atualização
   } catch (err) {
     console.error("Erro ao investir:", err);
     alert("Falha ao processar o investimento: " + err.message);
@@ -580,11 +578,13 @@ document.addEventListener("DOMContentLoaded", () => {
   atualizarSaldo();
   initIdentity();
   carregarSaldoReal();
-  verificarInvestimentoAtivo();
 });
 
-// Atualiza saldo real do banco a cada 30s
-setInterval(carregarSaldoReal, 30000);
+// Atualiza saldo real do banco a cada 2 minutos
+setInterval(carregarSaldoReal, 2 * 60 * 1000);
+      
+
+
 
 // Funções de modal
 function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
