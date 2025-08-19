@@ -64,10 +64,10 @@ exports.handler = async (event) => {
       [valor, email]
     );
 
-    // Define o próximo pagamento para daqui a 2 minutos (no DB)
+    // Define o próximo pagamento para daqui a 24h (no DB)
     await client.query(
       `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
-       VALUES ($1, $2, $3, NOW() + INTERVAL '2 minutes')`,
+       VALUES ($1, $2, $3, NOW() + INTERVAL '24 hours')`,
       [email, valor, lucro_diario]
     );
 
