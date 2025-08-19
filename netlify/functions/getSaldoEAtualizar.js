@@ -8,7 +8,7 @@ const pool = new Pool({
 const CYCLE_MS = 2 * 60 * 1000; // 2 minutos
 
 exports.handler = async (event) => {
-  const email = event.queryStringParameters.email;
+  const email = event.queryStringParameters?.email;
   if (!email) {
     return {
       statusCode: 400,
@@ -41,21 +41,9 @@ exports.handler = async (event) => {
     const diffMs = agora - ultimo;
     const ciclos = Math.floor(diffMs / CYCLE_MS);
 
-    // 🔍 LOGS PARA DEPURAÇÃO
-    console.log("=====================================");
-    console.log("Email:", email);
-    console.log("Saldo atual:", saldo);
-    console.log("Lucro por ciclo:", lucro_diario);
-    console.log("Último pagamento salvo:", ultimo_pagamento);
-    console.log("Agora (ms):", agora);
-    console.log("Último (ms):", ultimo);
-    console.log("Diferença em ms:", diffMs);
-    console.log("Ciclos passados:", ciclos);
-    console.log("=====================================");
-
     if (ciclos > 0 && lucro_diario > 0) {
       lucro_creditado = ciclos * lucro_diario;
-      saldo += lucro_creditado;
+      saldo = Number(saldo) + lucro_creditado;
 
       await client.query(
         "UPDATE usuarios SET saldo = $1, ultimo_pagamento = NOW() WHERE email = $2",
