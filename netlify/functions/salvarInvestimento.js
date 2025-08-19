@@ -5,8 +5,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
-const CYCLE_MS = 2 * 60 * 1000; // 2 minutos
-
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
@@ -66,14 +64,11 @@ exports.handler = async (event) => {
       [valor, email]
     );
 
-    // Define o próximo pagamento para daqui a 2 minutos
-    const proximoPagamento = new Date(Date.now() + CYCLE_MS);
-
-    // Registra o investimento
+    // Define o próximo pagamento para daqui a 2 minutos (no DB)
     await client.query(
       `INSERT INTO investimentos (email, valor, lucro_diario, proximo_pagamento)
-       VALUES ($1, $2, $3, $4)`,
-      [email, valor, lucro_diario, proximoPagamento]
+       VALUES ($1, $2, $3, NOW() + INTERVAL '2 minutes')`,
+      [email, valor, lucro_diario]
     );
 
     // Registra transação
@@ -83,7 +78,7 @@ exports.handler = async (event) => {
       [email, valor]
     );
 
-    // Pega saldo final atualizado
+    // Saldo final
     const saldoFinalRes = await client.query(
       "SELECT saldo FROM usuarios WHERE email = $1",
       [email]
@@ -96,8 +91,7 @@ exports.handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({
         sucesso: true,
-        saldo: saldoFinal,
-        proximo_pagamento: proximoPagamento.toISOString(),
+        saldo: saldoFinal
       }),
     };
   } catch (err) {
