@@ -657,19 +657,12 @@ fetch('/.netlify/functions/salvarTransacao', {
     }
   
 function abrirPerfil() {
-  document.getElementById("perfilModal").classList.remove("hidden");
+    document.getElementById("modalPerfil").classList.remove("hidden");
+  }
 
-  // Preenche com dados (substitua pelas variáveis reais)
-  document.getElementById("nomePerfil").innerText = usuario?.nome || "Usuário";
-  document.getElementById("emailPerfil").innerText = usuario?.email || "sem email";
-  document.getElementById("saldoPerfil").innerText = saldo?.toFixed(2) + " USDT";
-  document.getElementById("investPerfil").innerText = investimentoAtivo ? "Ativo" : "Nenhum";
-  document.getElementById("comissaoPerfil").innerText = comissao?.toFixed(2) + " USDT";
-}
-
-function fecharPerfil() {
-  document.getElementById("perfilModal").classList.add("hidden");
-      }
+  function fecharPerfil() {
+    document.getElementById("modalPerfil").classList.add("hidden");
+         }
 
   
     function abrirHistorico() {
