@@ -415,30 +415,6 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
   </div>
 </div>
 
-  <!-- Modal do Perfil -->
-<div id="perfilModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div class="bg-white rounded-2xl shadow-lg w-96 p-6">
-    <div class="flex items-center space-x-4">
-      <img id="fotoPerfil" src="https://via.placeholder.com/80" alt="Foto de perfil" class="w-20 h-20 rounded-full border-2 border-gray-300">
-      <div>
-        <h2 id="nomePerfil" class="text-xl font-semibold text-gray-800">Nome do Usuário</h2>
-        <p id="emailPerfil" class="text-sm text-gray-500">usuario@email.com</p>
-      </div>
-    </div>
-
-    <div class="mt-4">
-      <p><strong>Saldo:</strong> <span id="saldoPerfil">0.00 USDT</span></p>
-      <p><strong>Investimento Ativo:</strong> <span id="investPerfil">Nenhum</span></p>
-      <p><strong>Comissão:</strong> <span id="comissaoPerfil">0.00 USDT</span></p>
-    </div>
-
-    <div class="mt-6 flex justify-end space-x-3">
-      <button onclick="fecharPerfil()" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Fechar</button>
-      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Editar</button>
-    </div>
-  </div>
-</div>
-
 <!-- Modal Depósito -->
 <div id="modalDeposito">
   <div class="modal-content">
@@ -467,6 +443,29 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
     <div class="close-btn" onclick="fecharDeposito()">Fechar</div>
   </div>
 </div> 
+  <!-- Modal do Perfil -->
+<div id="perfilModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white rounded-2xl shadow-lg w-96 p-6">
+    <div class="flex items-center space-x-4">
+      <img id="fotoPerfil" src="https://via.placeholder.com/80" alt="Foto de perfil" class="w-20 h-20 rounded-full border-2 border-gray-300">
+      <div>
+        <h2 id="nomePerfil" class="text-xl font-semibold text-gray-800">Nome do Usuário</h2>
+        <p id="emailPerfil" class="text-sm text-gray-500">usuario@email.com</p>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <p><strong>Saldo:</strong> <span id="saldoPerfil">0.00 USDT</span></p>
+      <p><strong>Investimento Ativo:</strong> <span id="investPerfil">Nenhum</span></p>
+      <p><strong>Comissão:</strong> <span id="comissaoPerfil">0.00 USDT</span></p>
+    </div>
+
+    <div class="mt-6 flex justify-end space-x-3">
+      <button onclick="fecharPerfil()" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">Fechar</button>
+      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Editar</button>
+    </div>
+  </div>
+</div>
 
     <script>
       let saldo = 3.00;
