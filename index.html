@@ -305,6 +305,7 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
     <footer>&copy; 2025 Netlify Money – Todos os direitos reservados.</footer>
   </div> 
   
+ 
   <div id="modalSaque">
   <div class="modal-content">
     <h3>Solicitar Saque</h3>
@@ -332,9 +333,6 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
     <div id="conteudoPacote" style="text-align: center;">
       <!-- Conteúdo dinâmico do pacote será exibido aqui -->
     </div>
-    <button onclick="fecharModalPacote()" style="margin-top: 20px;" class="botao3D">Fechar</button>
-  </div>
-</div>
   
 <!-- Modal do histórico com visual 3D -->
 <div id="modalHistorico" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999; animation:fadeIn 0.4s;">
@@ -443,117 +441,227 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
     <div class="close-btn" onclick="fecharDeposito()">Fechar</div>
   </div>
 </div> 
+ 
 
     <script>
-
-let saldo = 3.00;
-let rendimento = 0; 
-let proximoPagamento = Date.now() + 1 * 60 * 1000;
+      let saldo = 3.00;
+let lucroDiario = 0;  // lucro por ciclo (controlado pelo backend)
+let rendimento = 0;
+let proximoPagamento = null;
 let indicados = [];
 let comissao = 0;
-  
+let usuario = { email: "" };
+let investimentoAtivo = false;
+
 // Atualiza saldo na tela
 function atualizarSaldo() {
-  document.getElementById("saldo").innerText = saldo.toFixed(2);
+  const el = document.getElementById("saldo");
+  if (el) el.innerText = saldo.toFixed(2);
 }
 
-// Função chamada quando o usuário investe em um pacote
-function investir(valor, lucroDiario) {
-  const usuario = netlifyIdentity.currentUser();
-  if (!usuario) {
-    alert("Usuário não identificado!");
+// Exibe mensagem
+function mostrarMensagem(msg) {
+  alert(msg);
+}
+
+// Adiciona evento no histórico
+function adicionarHistorico(texto) {
+  const lista = document.getElementById("historico");
+  if (lista) {
+    const item = document.createElement("li");
+    item.textContent = texto;
+    lista.prepend(item);
+  }
+}
+
+// Inicializa login via Netlify Identity
+function initIdentity() {
+  if (!window.netlifyIdentity) {
+    console.warn("Netlify Identity não encontrado.");
+    atualizarSaldo();
     return;
   }
 
-  if (saldo >= valor) {
-    saldo -= valor;
-    rendimento += lucroDiario;
-
+  netlifyIdentity.on("init", (user) => {
+    if (user && user.email) {
+      usuario.email = user.email;
+      carregarSaldoReal();
+    }
     atualizarSaldo();
-    alert("Investimento de $" + valor + " realizado! Seu próximo lucro será creditado em 24 horas.");
+  });
 
-    // Atualiza comissão se tiver indicados
-    if (indicados.length > 0) {
-      comissao += valor * 0.10;
-      document.getElementById("comissao-total").innerText = comissao.toFixed(2);
+  netlifyIdentity.on("login", (user) => {
+    if (user && user.email) {
+      usuario.email = user.email;
+      carregarSaldoReal();
+    }
+  });
+
+  netlifyIdentity.on("logout", () => {
+    usuario.email = "";
+    saldo = 0;
+    atualizarSaldo();
+  });
+
+  try { netlifyIdentity.init(); } catch (e) { /* ignora */ }
+}
+
+// Carrega saldo e histórico real do backend
+async function carregarSaldoReal() {
+  if (!usuario.email) return;
+
+  try {
+    const resp = await fetch('/.netlify/functions/getSaldoEAtualizar?email=' + encodeURIComponent(usuario.email));
+    const dados = await resp.json();
+
+    if (dados.sucesso) {
+      saldo = Number(dados.saldo) || 0;
+      atualizarSaldo();
+
+      if (dados.lucro_creditado > 0) {
+        adicionarHistorico(`💰 Lucro creditado: $${Number(dados.lucro_creditado).toFixed(2)}`);
+      }
+    } else {
+      console.warn(dados.mensagem || "Falha ao atualizar saldo.");
+    }
+  } catch (err) {
+    console.error("Erro ao carregar saldo real:", err);
+  }
+}
+
+// Comprar pacote de investimento
+async function investir(valor, lucroDoPacote) {
+  if (!usuario.email) {
+    alert("Faça login antes de investir.");
+    return;
+  }
+
+  const v = Number(valor);
+  const lucroPorCiclo = Number(lucroDoPacote);
+
+  if (!Number.isFinite(v) || v <= 0 || !Number.isFinite(lucroPorCiclo) || lucroPorCiclo <= 0) {
+    alert("Dados do investimento inválidos.");
+    return;
+  }
+
+  try {
+    const resp = await fetch('/.netlify/functions/salvarInvestimento', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: usuario.email,
+        valor: v,
+        lucro_diario: lucroPorCiclo
+      })
+    });
+
+    const dados = await resp.json();
+    if (!resp.ok || !dados.sucesso) {
+      throw new Error(dados.mensagem || "Erro ao salvar investimento");
     }
 
-    // Atualiza saldo no backend
-    fetch('/.netlify/functions/updateSaldo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        saldo: saldo
-      })
-    }).catch(err => console.error("Erro ao atualizar saldo:", err));
+    mostrarMensagem(`✅ Pacote de $${v} comprado com sucesso!`);
+    adicionarHistorico(`📦 Pacote: $${v} | Lucro por ciclo: $${lucroPorCiclo}`);
+    saldo = Number(dados.saldo) || saldo; 
+    atualizarSaldo();
 
-    // Salva o investimento no backend
-    fetch('/.netlify/functions/salvarInvestimento', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: usuario.email,
-        valor: valor,
-        lucro_diario: lucroDiario // nome do campo deve bater com o backend
-      })
-    }).catch(err => console.error("Erro ao salvar investimento:", err));
-
-  } else {
-    alert("Saldo insuficiente");
+    carregarSaldoReal(); // garante atualização
+  } catch (err) {
+    console.error("Erro ao investir:", err);
+    alert("Falha ao processar o investimento: " + err.message);
   }
-      }
+}
 
+// Inicialização
+document.addEventListener("DOMContentLoaded", () => {
+  atualizarSaldo();
+  initIdentity();
+  carregarSaldoReal();
+});
+
+// Atualiza saldo real do banco a cada 24 horas
+setInterval(carregarSaldoReal, 24 * 60 * 60 * 1000);
       
-    function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
-    function fecharModal(){document.getElementById('modalSaque').style.display='none';}
-    function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
-    function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
 
-    function confirmarSaque() {
+
+
+// Funções de modal
+function abrirModal(){document.getElementById('modalSaque').style.display='flex';}
+function fecharModal(){document.getElementById('modalSaque').style.display='none';}
+function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
+function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
+
+    async function confirmarSaque() {
   const valor = parseFloat(document.getElementById("valorSaque").value);
-  const carteira = document.getElementById("enderecoCarteira").value;
+  const endereco = document.getElementById("enderecoCarteira").value;
   const rede = document.getElementById("rede").value;
 
-  if (valor < 10) { alert("Saque mínimo é 10 USDT"); return; }
-  if (valor > saldo) { alert("Saldo insuficiente"); return; }
+  // Validações
+  if (valor < 10) { 
+    alert("Saque mínimo é 10 USDT"); 
+    return; 
+  }
+  if (valor > saldo) { 
+    alert("Saldo insuficiente"); 
+    return; 
+  }
+  if (!endereco) {
+    alert("Preencha o endereço para saque");
+    return;
+  }
 
-  // Envia solicitação de saque para o backend
-  fetch('/.netlify/functions/solicitarSaque', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: netlifyIdentity.currentUser()?.email,
-      valor,
-      carteira,
-      rede
-    })
-  })
-  .then(res => res.json())
-  .then(() => {
+  try {
+    // Envia solicitação de saque para o backend
+    const res = await fetch('/.netlify/functions/solicitarSaque', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        valor,
+        endereco, // <-- campo compatível com o banco
+        rede
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao enviar pedido de saque");
+
     alert("Pedido de saque enviado. Aguarde aprovação.");
     fecharModal();
-     // Salva transação de saque no histórico
-fetch('/.netlify/functions/salvarTransacao', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: netlifyIdentity.currentUser()?.email,
-    tipo: "Saque",
-    valor: valor,
-    data: new Date().toISOString()
-  })
-});
-  })
-  .catch(err => {
+
+    // Salva transação de saque no histórico
+    await fetch('/.netlify/functions/salvarTransacao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        tipo: "Saque",
+        valor,
+        data: new Date().toISOString()
+      })
+    });
+
+  } catch (err) {
     console.error(err);
-    alert("Erro ao enviar pedido de saque.");
-  });
-    }
+    alert("Erro ao enviar pedido de saque: " + err.message);
+  }
+      }
   
-  function abrirPerfil() {
-  alert("Seu perfil ainda está em desenvolvimento.");
+function abrirPerfil() {
+  document.getElementById("perfilModal").classList.remove("hidden");
+
+  // Se não existir, usa valores padrão
+  document.getElementById("nomePerfil").innerText = usuario?.nome || "Usuário";
+  document.getElementById("emailPerfil").innerText = usuario?.email || "sem email";
+  document.getElementById("saldoPerfil").innerText = (saldo ?? 0).toFixed(2) + " USDT";
+  document.getElementById("investPerfil").innerText = investimentoAtivo ? "Ativo" : "Nenhum";
+  document.getElementById("comissaoPerfil").innerText = (comissao ?? 0).toFixed(2) + " USDT";
 }
+
+function fecharPerfil() {
+  document.getElementById("perfilModal").classList.add("hidden");
+      }
+  
     function abrirHistorico() {
   document.getElementById("modalHistorico").style.display = "flex";
   carregarHistorico();
@@ -796,7 +904,8 @@ function atualizarEndereco() {
 }
   </script>
      
-<script> // Função para envio do depósito
+  <script>// Função para envio do depósito
+
 async function solicitarDeposito() {
   const valor = parseFloat(document.getElementById("valorDeposito").value);
   const rede = document.getElementById("redeDeposito").value;
