@@ -5,15 +5,14 @@ export const handler = async (event) => {
     return { statusCode: 405, body: 'Método não permitido' };
   }
 
-  const { email, valor, carteira, rede } = JSON.parse(event.body);
+  const { email, valor, endereco, rede } = JSON.parse(event.body);
 
-  if (!email || !valor || !carteira || !rede) {
-    return { statusCode: 400, body: 'Dados incompletos' };
+  if (!email || !valor || !endereco || !rede) {
+    return { statusCode: 400, body: JSON.stringify({ success: false, error: 'Dados incompletos' }) };
   }
 
-  // Conecta no banco Neon
   const client = new Client({
-    connectionString: process.env.DATABASE_URL, // configure no Netlify
+    connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
   });
 
@@ -21,9 +20,9 @@ export const handler = async (event) => {
     await client.connect();
 
     await client.query(
-      `INSERT INTO saques (email, valor, carteira, rede, status)
+      `INSERT INTO saques (email, valor, rede, endereco, status)
        VALUES ($1, $2, $3, $4, 'pendente')`,
-      [email, valor, carteira, rede]
+      [email, valor, rede, endereco]
     );
 
     await client.end();
@@ -32,6 +31,7 @@ export const handler = async (event) => {
       statusCode: 200,
       body: JSON.stringify({ success: true })
     };
+
   } catch (error) {
     console.error('Erro ao salvar saque:', error);
     return {
