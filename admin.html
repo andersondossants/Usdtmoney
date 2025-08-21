@@ -90,25 +90,24 @@
             <th>Ação</th>
           </tr>
         </thead>
-        <tbody id="tabela-depositos">
-          <tr><td colspan="6">Carregando...</td></tr>
-        </tbody>
+        <tbody id="tabela-depositos"><tr><td colspan="6">Carregando...</td></tr></tbody>
       </table>
 
       <h2>Pedidos de Saque</h2>
-<table>
-  <thead>
-    <tr>
-      <th>Email</th>
-      <th>Valor</th>
-      <th>Status</th>
-      <th>Rede</th>
-      <th>Endereço</th>
-      <th>Ação</th>
-    </tr>
-  </thead>
-  <tbody id="tabela-saques"><tr><td colspan="6">Carregando...</td></tr></tbody>
-</table>
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Rede</th>
+            <th>Endereço</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-saques"><tr><td colspan="6">Carregando...</td></tr></tbody>
+      </table>
+    </div>
 
 <script>
 const ADMIN_EMAIL = "boylouco512@gmail.com";
@@ -158,7 +157,7 @@ async function carregarUsuarios() {
   });
 }
 
-// Lista saques
+// Lista saques com atualização automática
 async function carregarSaques() {
   const tabela = document.getElementById('tabela-saques');
   tabela.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
@@ -179,7 +178,7 @@ async function carregarSaques() {
     `;
     tabela.appendChild(tr);
   });
-  }
+}
 
 // Aprova saque
 async function aprovarSaque(id) {
@@ -215,16 +214,12 @@ async function carregarDepositos() {
       <td>${dep.valor}</td>
       <td>${dep.status}</td>
       <td>${dep.rede || '-'}</td>
-      <td>
-        ${dep.comprovativo 
+      <td>${dep.comprovativo 
           ? `<a href="${dep.comprovativo}" target="_blank">Ver</a>` 
-          : 'Nenhum'}
-      </td>
-      <td>
-        ${dep.status === 'pendente' 
+          : 'Nenhum'}</td>
+      <td>${dep.status === 'pendente' 
           ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` 
-          : ''}
-      </td>
+          : ''}</td>
     `;
     tabela.appendChild(tr);
   });
@@ -253,6 +248,9 @@ function carregarTudo() {
   carregarUsuarios();
   carregarSaques();
   carregarDepositos();
+
+  // Atualiza saques automaticamente a cada 10 segundos
+  setInterval(carregarSaques, 10000);
 }
 
 // Login com verificação de email
