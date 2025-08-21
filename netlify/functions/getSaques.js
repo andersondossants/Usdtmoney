@@ -9,7 +9,7 @@ exports.handler = async () => {
   try {
     await client.connect();
 
-    // Busca todos os saques com endereço e rede
+    // Buscar todos os saques, incluindo endereço e rede
     const result = await client.query(
       'SELECT id, email, valor, status, rede, endereco FROM saques ORDER BY id DESC'
     );
