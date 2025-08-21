@@ -25,22 +25,8 @@
       margin-bottom: 30px;
     }
     label { display: block; margin: 10px 0 5px; }
-    input {
-      width: 100%;
-      padding: 8px;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 15px;
-    }
-    button {
-      padding: 6px 10px;
-      background: #0ea5e9;
-      border: none;
-      border-radius: 8px;
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-    }
+    input { width: 100%; padding: 8px; border-radius: 8px; border: none; margin-bottom: 15px; }
+    button { padding: 6px 10px; background: #0ea5e9; border: none; border-radius: 8px; color: #fff; font-size: 14px; cursor: pointer; }
     button:hover { background: #22d3ee; }
     .msg { margin-top: 15px; font-weight: bold; }
     #usuarios { width: 90%; max-width: 600px; }
@@ -60,6 +46,7 @@
   <div id="painel" style="display:none; width:100%; align-items:center; flex-direction:column;">
     <h1>Painel de Administração</h1>
 
+    <!-- Atualizar Saldo -->
     <div class="form-box">
       <label>Email do usuário</label>
       <input type="email" id="email" placeholder="usuario@teste.com">
@@ -69,6 +56,7 @@
       <div class="msg" id="msg"></div>
     </div>
 
+    <!-- Lista Usuários -->
     <div id="usuarios">
       <h2>Lista de Usuários</h2>
       <table>
@@ -77,7 +65,8 @@
       </table>
     </div>
 
-    <div id="pedidos">
+    <!-- Pedidos Depósito -->
+    <div id="pedidos-deposito">
       <h2>Pedidos de Depósito</h2>
       <table>
         <thead>
@@ -92,7 +81,10 @@
         </thead>
         <tbody id="tabela-depositos"><tr><td colspan="6">Carregando...</td></tr></tbody>
       </table>
+    </div>
 
+    <!-- Pedidos Saque -->
+    <div id="pedidos-saque">
       <h2>Pedidos de Saque</h2>
       <table>
         <thead>
@@ -108,21 +100,19 @@
         <tbody id="tabela-saques"><tr><td colspan="6">Carregando...</td></tr></tbody>
       </table>
     </div>
+  </div>
 
 <script>
 const ADMIN_EMAIL = "boylouco512@gmail.com";
 
-// Atualiza saldo manualmente
+/* ======= SALDO ======= */
 async function atualizarSaldo() {
   const email = document.getElementById("email").value.trim();
   const valor = parseFloat(document.getElementById("valor").value);
   const msg = document.getElementById("msg");
   msg.innerText = "";
 
-  if (!email || isNaN(valor)) {
-    msg.innerText = "Preencha corretamente os campos!";
-    return;
-  }
+  if (!email || isNaN(valor)) { msg.innerText = "Preencha corretamente os campos!"; return; }
 
   try {
     const res = await fetch(`/.netlify/functions/getSaldo?email=${encodeURIComponent(email)}`);
@@ -143,7 +133,7 @@ async function atualizarSaldo() {
   }
 }
 
-// Lista usuários
+/* ======= USUÁRIOS ======= */
 async function carregarUsuarios() {
   const tabela = document.getElementById('tabelaUsuarios');
   tabela.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
@@ -157,7 +147,7 @@ async function carregarUsuarios() {
   });
 }
 
-// Lista saques com atualização automática
+/* ======= SAQUES ======= */
 async function carregarSaques() {
   const tabela = document.getElementById('tabela-saques');
   tabela.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
@@ -172,41 +162,31 @@ async function carregarSaques() {
       <td>${saq.status}</td>
       <td>${saq.rede || '-'}</td>
       <td>${saq.endereco || 'Não informado'}</td>
-      <td>${saq.status === 'pendente' 
-          ? `<button type="button" onclick="aprovarSaque('${saq.id}')">Aprovar</button>` 
-          : ''}</td>
+      <td>${saq.status === 'pendente' ? `<button type="button" onclick="aprovarSaque('${saq.id}')">Aprovar</button>` : ''}</td>
     `;
     tabela.appendChild(tr);
   });
 }
 
-// Aprova saque
 async function aprovarSaque(id) {
   try {
     const res = await fetch('/.netlify/functions/aprovarSaque', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id })
     });
     if (!res.ok) throw new Error('Erro ao aprovar saque');
-    await carregarSaques();
-    await carregarUsuarios();
+    await carregarSaques(); await carregarUsuarios();
     alert('Saque aprovado com sucesso!');
-  } catch (err) {
-    console.error(err);
-    alert('Erro: ' + err.message);
-  }
+  } catch (err) { console.error(err); alert('Erro: ' + err.message); }
 }
 
-// Lista depósitos
+/* ======= DEPÓSITOS ======= */
 async function carregarDepositos() {
   const tabela = document.getElementById('tabela-depositos');
   tabela.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
-  
   const res = await fetch('/.netlify/functions/getDepositos');
   const data = await res.json();
   tabela.innerHTML = '';
-
   data.forEach(dep => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -214,18 +194,13 @@ async function carregarDepositos() {
       <td>${dep.valor}</td>
       <td>${dep.status}</td>
       <td>${dep.rede || '-'}</td>
-      <td>${dep.comprovativo 
-          ? `<a href="${dep.comprovativo}" target="_blank">Ver</a>` 
-          : 'Nenhum'}</td>
-      <td>${dep.status === 'pendente' 
-          ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` 
-          : ''}</td>
+      <td>${dep.comprovativo ? `<a href="${dep.comprovativo}" target="_blank">Ver</a>` : 'Nenhum'}</td>
+      <td>${dep.status === 'pendente' ? `<button type="button" onclick="aprovarDeposito('${dep.id}')">Aprovar</button>` :''}</td>
     `;
     tabela.appendChild(tr);
   });
 }
 
-// Aprova depósito
 async function aprovarDeposito(id) {
   try {
     const res = await fetch('/.netlify/functions/aprovarDeposito', {
@@ -243,17 +218,17 @@ async function aprovarDeposito(id) {
   }
 }
 
-// Carregar tudo
+/* ======= CARREGAMENTO AUTOMÁTICO ======= */
 function carregarTudo() {
   carregarUsuarios();
   carregarSaques();
   carregarDepositos();
 
-  // Atualiza saques automaticamente a cada 10 segundos
-  setInterval(carregarSaques, 10000);
+  // Atualiza saques e depósitos automaticamente a cada 10 segundos
+  setInterval(() => { carregarSaques(); carregarDepositos(); }, 10000);
 }
 
-// Login com verificação de email
+/* ======= LOGIN ADMIN ======= */
 netlifyIdentity.on('login', user => {
   const email = user.email || (user.user_metadata && user.user_metadata.email);
   if (email === ADMIN_EMAIL) {
