@@ -591,46 +591,61 @@ function fecharModal(){document.getElementById('modalSaque').style.display='none
 function mostrarDeposito(){document.getElementById('modalDeposito').style.display='flex';}
 function fecharDeposito(){document.getElementById('modalDeposito').style.display='none';}
 
-    function confirmarSaque() {
+    async function confirmarSaque() {
   const valor = parseFloat(document.getElementById("valorSaque").value);
-  const carteira = document.getElementById("enderecoCarteira").value;
+  const endereco = document.getElementById("enderecoCarteira").value;
   const rede = document.getElementById("rede").value;
 
-  if (valor < 10) { alert("Saque mínimo é 10 USDT"); return; }
-  if (valor > saldo) { alert("Saldo insuficiente"); return; }
+  // Validações
+  if (valor < 10) { 
+    alert("Saque mínimo é 10 USDT"); 
+    return; 
+  }
+  if (valor > saldo) { 
+    alert("Saldo insuficiente"); 
+    return; 
+  }
+  if (!endereco) {
+    alert("Preencha o endereço para saque");
+    return;
+  }
 
-  // Envia solicitação de saque para o backend
-  fetch('/.netlify/functions/solicitarSaque', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: netlifyIdentity.currentUser()?.email,
-      valor,
-      carteira,
-      rede
-    })
-  })
-  .then(res => res.json())
-  .then(() => {
+  try {
+    // Envia solicitação de saque para o backend
+    const res = await fetch('/.netlify/functions/solicitarSaque', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        valor,
+        endereco, // <-- campo compatível com o banco
+        rede
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Erro ao enviar pedido de saque");
+
     alert("Pedido de saque enviado. Aguarde aprovação.");
     fecharModal();
-     // Salva transação de saque no histórico
-fetch('/.netlify/functions/salvarTransacao', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    email: netlifyIdentity.currentUser()?.email,
-    tipo: "Saque",
-    valor: valor,
-    data: new Date().toISOString()
-  })
-});
-  })
-  .catch(err => {
+
+    // Salva transação de saque no histórico
+    await fetch('/.netlify/functions/salvarTransacao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: netlifyIdentity.currentUser()?.email,
+        tipo: "Saque",
+        valor,
+        data: new Date().toISOString()
+      })
+    });
+
+  } catch (err) {
     console.error(err);
-    alert("Erro ao enviar pedido de saque.");
-  });
-    }
+    alert("Erro ao enviar pedido de saque: " + err.message);
+  }
+      }
   
 function abrirPerfil() {
   document.getElementById("perfilModal").classList.remove("hidden");
