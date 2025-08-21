@@ -441,52 +441,8 @@ footer { text-align: center; padding: 20px; font-size: 0.9em; color: #94a3b8; ba
     <div class="close-btn" onclick="fecharDeposito()">Fechar</div>
   </div>
 </div> 
+    
 <script>
-    function abrirModalCentral(idModal) {
-  // Fecha todos os modais antes
-  const modais = ['modalSaque','modalDeposito','modalPacote','modalHistorico','painelComissao','perfilModal'];
-  modais.forEach(m => {
-    const el = document.getElementById(m);
-    if(el) el.style.display = 'none';
-  });
-
-  // Abre apenas o modal desejado
-  const modal = document.getElementById(idModal);
-  if(modal) modal.style.display = 'flex';
-}
-
-// Agora substitua nas chamadas:
-function verPacote() {
-  abrirModalCentral('modalPacote');
-  carregarPacotesComprados();
-}
-
-function abrirPerfil() {
-  abrirModalCentral('perfilModal');
-  document.getElementById("nomePerfil").innerText = usuario?.nome || "Usuário";
-  document.getElementById("emailPerfil").innerText = usuario?.email || "sem email";
-  document.getElementById("saldoPerfil").innerText = (saldo ?? 0).toFixed(2) + " USDT";
-  document.getElementById("investPerfil").innerText = investimentoAtivo ? "Ativo" : "Nenhum";
-  document.getElementById("comissaoPerfil").innerText = (comissao ?? 0).toFixed(2) + " USDT";
-}
-
-function abrirHistorico() {
-  abrirModalCentral('modalHistorico');
-  carregarHistorico();
-}
-
-function abrirComissao() {
-  abrirModalCentral('painelComissao');
-  document.getElementById("linkConvite").value =
-    window.location.origin + "?ref=" + encodeURIComponent(netlifyIdentity.currentUser()?.email || "");
-  document.getElementById("listaIndicados").innerHTML =
-    indicados.map(i => "<li>" + i + "</li>").join("");
-  document.getElementById("comissao-total2").innerText = comissao.toFixed(2);
-}
-
-function abrirModal() { abrirModalCentral('modalSaque'); }
-function mostrarDeposito() { abrirModalCentral('modalDeposito'); }
-
     
       let saldo = 3.00;
 let lucroDiario = 0;  // lucro por ciclo (controlado pelo backend)
@@ -691,20 +647,9 @@ function fecharDeposito(){document.getElementById('modalDeposito').style.display
   }
       }
   
-function abrirPerfil() {
-  document.getElementById("perfilModal").classList.remove("hidden");
-
-  // Se não existir, usa valores padrão
-  document.getElementById("nomePerfil").innerText = usuario?.nome || "Usuário";
-  document.getElementById("emailPerfil").innerText = usuario?.email || "sem email";
-  document.getElementById("saldoPerfil").innerText = (saldo ?? 0).toFixed(2) + " USDT";
-  document.getElementById("investPerfil").innerText = investimentoAtivo ? "Ativo" : "Nenhum";
-  document.getElementById("comissaoPerfil").innerText = (comissao ?? 0).toFixed(2) + " USDT";
-}
-
-function fecharPerfil() {
-  document.getElementById("perfilModal").classList.add("hidden");
-      }
+    function abrirPerfil() {
+  alert("Seu perfil ainda está em desenvolvimento.");
+  }
   
     function abrirHistorico() {
   document.getElementById("modalHistorico").style.display = "flex";
