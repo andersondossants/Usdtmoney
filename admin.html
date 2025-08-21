@@ -96,12 +96,19 @@
       </table>
 
       <h2>Pedidos de Saque</h2>
-      <table>
-        <thead><tr><th>Email</th><th>Valor</th><th>Status</th><th>Ação</th></tr></thead>
-        <tbody id="tabela-saques"><tr><td colspan="4">Carregando...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
+<table>
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Valor</th>
+      <th>Status</th>
+      <th>Rede</th>
+      <th>Endereço</th>
+      <th>Ação</th>
+    </tr>
+  </thead>
+  <tbody id="tabela-saques"><tr><td colspan="6">Carregando...</td></tr></tbody>
+</table>
 
 <script>
 const ADMIN_EMAIL = "boylouco512@gmail.com";
@@ -154,7 +161,7 @@ async function carregarUsuarios() {
 // Lista saques
 async function carregarSaques() {
   const tabela = document.getElementById('tabela-saques');
-  tabela.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+  tabela.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
   const res = await fetch('/.netlify/functions/getSaques');
   const data = await res.json();
   tabela.innerHTML = '';
@@ -164,11 +171,15 @@ async function carregarSaques() {
       <td>${saq.email}</td>
       <td>${saq.valor}</td>
       <td>${saq.status}</td>
-      <td>${saq.status === 'pendente' ? `<button type="button" onclick="aprovarSaque('${saq.id}')">Aprovar</button>` : ''}</td>
+      <td>${saq.rede || '-'}</td>
+      <td>${saq.endereco || 'Não informado'}</td>
+      <td>${saq.status === 'pendente' 
+          ? `<button type="button" onclick="aprovarSaque('${saq.id}')">Aprovar</button>` 
+          : ''}</td>
     `;
     tabela.appendChild(tr);
   });
-}
+  }
 
 // Aprova saque
 async function aprovarSaque(id) {
