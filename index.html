@@ -904,7 +904,14 @@ function atualizarEndereco() {
 }
   </script>
      
-<script> // Função para envio do depósito
+  <script>// Função para envio do depósito
+function abrirDeposito() {
+  fecharModalSaque(); // fecha qualquer modal de saque aberto
+  document.getElementById('modalDeposito').style.display = 'flex';
+}
+function fecharDeposito() {
+  document.getElementById('modalDeposito').style.display = 'none';
+  }
 async function solicitarDeposito() {
   const valor = parseFloat(document.getElementById("valorDeposito").value);
   const rede = document.getElementById("redeDeposito").value;
